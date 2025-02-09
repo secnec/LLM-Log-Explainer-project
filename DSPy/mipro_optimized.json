@@ -1,0 +1,49 @@
+{
+  "prog.predict": {
+    "lm": null,
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "content": "Connection broken for id 188978561024, my id = 2, error =",
+        "label": "zookeeper"
+      },
+      {
+        "content": "Processed session termination for sessionid: 0x14ed93111f20050",
+        "label": "zookeeper"
+      },
+      {
+        "content": "Interrupting SendWorker",
+        "label": "zookeeper"
+      },
+      {
+        "content": "Received connection request \/10.10.34.11:48609",
+        "label": "zookeeper"
+      }
+    ],
+    "signature": {
+      "instructions": "Provide a detailed classification of the content, including a clear explanation of the reasoning behind the classification, and output the corresponding label.",
+      "fields": [
+        {
+          "prefix": "Content:",
+          "description": "${content}"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Label:",
+          "description": "${label}"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.9",
+      "dspy": "2.6.2",
+      "cloudpickle": "3.1"
+    }
+  }
+}
