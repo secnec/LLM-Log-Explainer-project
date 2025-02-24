@@ -1,0 +1,4 @@
+dspy
+ipykernel
+openai
+pandas
