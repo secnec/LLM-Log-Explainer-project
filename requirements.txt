@@ -2,3 +2,5 @@ dspy
 ipykernel
 openai
 pandas
+sentence-transformers
+scikit-learn
