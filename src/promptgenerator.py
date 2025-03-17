@@ -3,7 +3,7 @@ class PromptGenerator:
         pass
 
     def generateLabelPrompts(self, treshold, df):
-        #Generates prompts for getting labels from LLM, and adds this as a new column into the DF. Only generates them for lines whose anomaly score is larger or equal to treshold.
+        #Generates prompts for getting labels from LLM, and adds this as a new column into the DF. Only generates them for lines whose anomaly score is larger or equal to treshold. 
         pass
 
     def generateExplanationPrompts(self, treshold, df):
