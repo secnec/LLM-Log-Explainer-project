@@ -1,19 +1,19 @@
 from contextselection import ContextSelection
-from promptgenerator import PromptGenerator
-from llmprompter import LLMPrompter
+from prompt_generator import PromptGenerator
+from llm_prompter import LLMPrompter
 
-def importdata():
+def import_data():
     pass
 
 def main():
-    df = importdata()
+    df = import_data()
 
     cs = ContextSelection()
     pg = PromptGenerator()
     prompter = LLMPrompter()
 
-    df = cs.getLexicalContex(df)
-    df = pg.generateExplanationPrompts(treshold=0.9, df=df)
+    df = cs.getLexicalContext(df)
+    df = pg.generateExplanationPrompts(threshold=0.9, df=df)
     df = prompter.getExplanationResponses(df)
 
 if __name__ == "__main__":

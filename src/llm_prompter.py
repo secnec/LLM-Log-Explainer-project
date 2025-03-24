@@ -1,6 +1,10 @@
+import os
+import pandas as pd
+import polars as pl
+
 class LLMPrompter:
     def __init__(self):
-        pass
+        self.lm = None
 
     def getExplanationResponses(self, df):
         #Gets the responses from the LLM for each prompt in the explanation prompts -column, and writes them into a new explanations-column

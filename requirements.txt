@@ -4,3 +4,8 @@ openai
 pandas
 sentence-transformers
 scikit-learn
+pytest
+sentence-transformers
+
+# Testing
+pytest
