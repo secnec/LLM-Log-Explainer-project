@@ -1,5 +1,14 @@
-
+import json
 import yaml 
+
+
+def singleton(cls):
+    instances = {}
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return get_instance   
 
 def parse_log_labels(file_path):
     log_types = {}
@@ -37,6 +46,10 @@ def parse_log_labels(file_path):
 def load_yaml_config(file_path: str) -> dict:
     with open(file_path, 'r') as f:
         return yaml.safe_load(f)
+    
+def save_dict_to_json(dict: dict, file_path: str):
+    with open(file_path, 'w') as f:
+        json.dump(dict, f)
 
 if __name__ == '__main__':
     # Example usage
