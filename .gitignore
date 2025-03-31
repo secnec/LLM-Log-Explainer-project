@@ -1,4 +1,5 @@
 mvenv/
 .env
 Hadoop/
-__pycache__
+**__pycache__**
+LLMs/data/
