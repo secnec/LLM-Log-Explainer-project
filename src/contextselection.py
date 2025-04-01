@@ -83,7 +83,7 @@ class ContextSelection:
     def getLexicalContext(self) -> pd.DataFrame:
         df = self.context_df.drop_duplicates(subset=[self.column_name]) if self.drop_duplicates else self.context_df
         # Will be deleted after testing
-        df = df.sample(1000) if df.shape[0] > 1000 else df
+        df = df.sample(10000) if df.shape[0] > 10000 else df
         context_df_embeddings = self.embedder.embed(df[self.column_name].values)
         cosine_similarities = cosine_similarity(context_df_embeddings)
         print(cosine_similarities)
