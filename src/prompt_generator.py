@@ -80,7 +80,7 @@ class PromptGenerator:
         """
         headers = df.columns
 
-        
+
         # Initialize the 'explanation_prompt' column with null
         df = df.with_columns(pl.lit(None).alias('explanation_prompt'))
 

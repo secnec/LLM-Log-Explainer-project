@@ -65,6 +65,7 @@ Now, explain the following anomalous log line by following these steps:
 Generate a detailed explanation following these steps.
 """
 
+
 DEFAULT_LABEL_PROMPT = """
   Below are examples of log lines with their assigned labels and explanations to illustrate the labeling reasoning.
 
