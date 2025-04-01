@@ -80,23 +80,24 @@ class ContextSelection:
         similarity_df['similarity'] = cosine_similarities[0]
         return similarity_df
 
-    def semantic_matrix_all_df(self) -> pd.DataFrame:
-        
+    def getLexicalContext(self) -> pd.DataFrame:
         df = self.context_df.drop_duplicates(subset=[self.column_name]) if self.drop_duplicates else self.context_df
+        # Will be deleted after testing
+        df = df.sample(1000) if df.shape[0] > 1000 else df
         context_df_embeddings = self.embedder.embed(df[self.column_name].values)
         cosine_similarities = cosine_similarity(context_df_embeddings)
-        df['similarity'] = cosine_similarities[0]
-        df.to_csv("semantic_matrix.csv", index=False)
-        return df
-
-    def getLexicalContext(self) -> pd.DataFrame:
-        df = self.semantic_matrix_all_df()
-        # context_ids column should contain the row numbers of the top k similar rows
-        df['context_ids'] = df['similarity'].apply(lambda x: str(np.argsort(x)[-self.top_k_far:]))
-        return df
+        print(cosine_similarities)
         
+        # Get the indices of the top similar rows (excluding self)
+        top_similar_indices = np.argsort(-cosine_similarities, axis=1)[:, 1:]  # Exclude self (diagonal)
+        top_k_far_indices = top_similar_indices[:, :self.top_k_far]
+        # Map indices to "row_nr" values
+        row_nr_values = df["row_nr"].values  # Convert the "row_nr" column to a NumPy array
+        df["context_ids"] = [list(row_nr_values[indices]) for indices in top_k_far_indices]
+
+        return df
 
 
 if __name__ == "__main__":
     context_selection = ContextSelection("semantic", "filtered_data_one_month.parquet", "e_message_normalized", 5, 5)
-    print(context_selection.semantic_matrix_all_df())
+    print(context_selection.getLexicalContext())
