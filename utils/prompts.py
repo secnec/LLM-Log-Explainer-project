@@ -138,11 +138,21 @@ DEFAULT_LABEL_PROMPT = """
 
   ---
 
-  Now, assign a label to the following log line based on its content and context:
+  Analyze the following log entry, context and classify it into one of these categories:
+   - application: Issues with the application logic, workflows, or functionality
+   - authentication: Issues with user authentication, permissions, or security
+   - io: Issues with input/output operations, file handling, or storage
+   - memory: Issues with memory allocation, leaks, or usage
+   - network: Issues with network connectivity, protocols, or transmission
+   - other: Any other type of anomaly that doesn't fit the above categories
 
-  Log Line: {log_str}
-  Context Lines:
-  {context_str}
+   <log entry>
+   Log Line: {log_str}
+   </log entry>
+   <context>
+   Context Lines:
+   {context_str}
+   </context>
 
-  Output only the label.
+  Return ONLY one of these exact category names without explanation.
   """
