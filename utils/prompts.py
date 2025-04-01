@@ -1,24 +1,70 @@
 # utils/prompts.py
+
 DEFAULT_EXPLANATION_PROMPT = """
-  Below are examples of log lines with explanations.
+You are an expert in analyzing software logs to identify and explain anomalies. Below are examples to help you understand the task:
 
-  Example 1:
-  Log Line: {example_normal}
-  Explanation: {explanation_normal}
+**Example 1: Normal Log**
+Log Line: 
+"Sequence ID: 1719688444__correct,
+Label: correct,
+Anomaly Score: 73.48012061095164,
+Log Messages:
+<init> - normalised = /oauth2/token
+getConfigStream - Config loaded from externalized folder for primary.jks in /config
+getPrivateKey - filename = primary.jks key = selfsigned
+debug - validate( "Basic MTM0Mzg0MmUtYzU3ZC00ZDVhLWIyOTUtZjY5MzM0YTVjNjlkOnlFb1ladmdKU3otZ1R6eF9kYVJhVFE=", "Basic MTM0Mzg0MmUtYzU3ZC00ZDVhLWIyOTUtZjY5MzM0YTVjNjlkOnlFb1ladmdKU3otZ1R6eF9kYVJhVFE=", authorization)
+getPrivateKey - filename = primary.jks key = selfsigned
+handleAuthorizationCode - code = OstfU9uASoy7PIX6vU7X4Q...
+<init> - normalised = /oauth2/token
+<init> - normalised = /oauth2/token
+<init> - normalised = /oauth2/token"
+Explanation: 
+"This sequence is normal because it follows the expected OAuth2 authorization code flow. It includes successful configuration loading (`getConfigStream`), private key retrieval (`getPrivateKey`), validation of credentials (`debug - validate`), and handling of the authorization code (`handleAuthorizationCode`). The low anomaly score and "correct" label confirm that this sequence represents typical, error-free behavior."
 
-  Example 2:
-  Log Line: {example_anomalous}
-  Explanation: {explanation_anomalous}
+**Example 2: Anomalous Log**
+Log Line: 
+"Sequence ID: 1719756844__invalid_code_verifier_format_PKCE_400,
+Label: invalid_code_verifier_format_PKCE_400,
+Anomaly Score: 273.50457034572565,
+Log Messages:
+<init> - normalised = /oauth2/token
+debug - validate( "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", authorization)
+getConfigStream - Config loaded from externalized folder for primary.jks in /config
+getConfigStream - Config loaded from externalized folder for primary.jks in /config
+<init> - path = /oauth2/token, base path is set to: null
+<init> - path = /oauth2/token, base path is set to: null
+<init> - path =/oauth2/token
+debug - validate( "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", authorization)
+<init> - path = /..."
+Explanation: 
+"This sequence is anomalous due to an issue in the Proof Key for Code Exchange (PKCE) flow, as indicated by the label `invalid_code_verifier_format_PKCE_400`. The repeated `getConfigStream` entries and multiple `<init> - path = /oauth2/token, base path is set to: null` suggest potential misconfiguration or redundant attempts to process the request. The high anomaly score and the 400 error label point to a failure caused by an invalid code verifier format. This anomaly could stem from a programming error in client-side implementation or an intentional attack vector."
 
-  Now, explain the following anomalous log line, considering its context:
+Now, explain the following anomalous log line by following these steps:
 
-  Anomalous Log Line: {anomalous_log_str}
-  {label_str}
-  Context Lines:
-  {context_str}
+1. **Identify the Anomalous Log Line and Label (if provided)**:
+   - Review the log line: {anomalous_log_str}
+   - Note the label (if available): {label_str}
 
-  Provide a natural language explanation for why this log line is considered anomalous, including possible root causes, and explain the label if provided.
-  """
+2. **Compare to the Normal Example**:
+   - Compare the anomalous log to the normal example provided.
+   - Identify key differences in content, structure, or behavior.
+
+3. **Analyze the Log and Context**:
+   - Examine the anomalous log and its context: {context_str}
+   - Look for unusual patterns, errors, or deviations.
+
+4. **Hypothesize Potential Causes**:
+   - Based on the differences and context, propose possible reasons for the anomaly.
+
+5. **Explain the Label (if provided)**:
+   - If a label is given, interpret it in the context of your analysis.
+
+6. **Provide a Natural Language Explanation**:
+   - Summarize why the log is anomalous and its likely root causes in clear, concise language.
+
+Generate a detailed explanation following these steps.
+"""
+
 
 DEFAULT_LABEL_PROMPT = """
   Below are examples of log lines with their assigned labels and explanations to illustrate the labeling reasoning.
