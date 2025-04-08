@@ -3,3 +3,5 @@ mvenv/
 Hadoop/
 **__pycache__**
 LLMs/data/
+src/data/
+.DS_Store
