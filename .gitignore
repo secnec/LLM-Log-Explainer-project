@@ -3,3 +3,6 @@ mvenv/
 Hadoop/
 **__pycache__**
 LLMs/data/
+.pytest_cache
+venv
+myenv

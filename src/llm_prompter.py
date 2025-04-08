@@ -1,120 +1,161 @@
 import os
+import requests
+import json
 import pandas as pd
 import polars as pl
 from dotenv import load_dotenv
-from utils.anomaly import AnomalyLabeler
-import dspy
+
 class LLMPrompter:
     def __init__(self):
-        self.api_key = None
-        self.lm = None
+        load_dotenv()
+        self.api_key = os.getenv("OPENROUTER_API_KEY")
+        if not self.api_key:
+            raise Exception("Failed to load OPENROUTER_API_KEY from environment")
+        
+        self.model = "anthropic/claude-3-sonnet-20240229"
+        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        
+        print(f"Initialized LLMPrompter with OpenRouter API (model: {self.model})")
+    
+    def set_model(self, model_name):
+        """Change the model being used"""
+        self.model = model_name
+        print(f"Changed model to: {self.model}")
+    
+    def call_llm(self, prompt, max_tokens=800):
+        """Make a direct API call to OpenRouter"""
         try:
-            load_dotenv()
-            self.api_key = os.getenv("OPENROUTER_API_KEY")
-        except:
-            raise Exception("Failed to init OpenRouter API")
-
-    def updateLM(self, new_lm):
-        self.lm = dspy.LM(new_lm, self.api_key)
-        dspy.configure(lm=self.lm)
-
-    def loadLM(self, path="./utils/classifier_optimize.json"):
-        loaded_dspy_program = dspy.ChainOfThought(AnomalyLabeler)
-        loaded_dspy_program.load(path)
-
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": max_tokens
+            }
+            
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                data=json.dumps(payload)
+            )
+            
+            if response.status_code != 200:
+                print(f"API error: {response.status_code}")
+                print(response.text)
+                return f"API Error: {response.status_code}"
+                
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+            
+        except Exception as e:
+            print(f"Error calling LLM: {str(e)}")
+            return f"Error: {str(e)}"
+    
     def getExplanationResponses(self, df):
         """
-        Gets the responses from the LLM for each prompt in the 'explanation_prompt' column,
+        Gets explanations from the LLM for each prompt in the 'explanation_prompt' column,
         and writes them into a new 'explanation_result' column.
 
         Parameters:
         - df (pl.DataFrame): Polars DataFrame containing log data with an 'explanation_prompt' column.
 
         Returns:
-        - df (pl.DataFrame): Updated DataFrame with a new 'explanation_result' column containing the LLM responses.
+        - df (pl.DataFrame): Updated DataFrame with a new 'explanation_result' column.
         """
-        # Ensure LLM is configured
-        if not hasattr(dspy.settings, 'lm'):
-            self.updateLM("openrouter/anthropic/claude-3-sonnet-20240229")
-        
         # Filter rows with non-null explanation prompts
         rows_with_prompts = df.filter(pl.col('explanation_prompt').is_not_null())
         
         # List to store generated explanations
         explanations = []
+        line_ids = []
+        
+        print(f"Generating explanations for {rows_with_prompts.shape[0]} prompts...")
+        
         for row in rows_with_prompts.iter_rows(named=True):
+            line_id = row['LineId']
             prompt = row['explanation_prompt']
+            
             try:
-                # Call the LLM with the prompt, setting max_tokens to limit response length
-                response = self.lm(prompt, max_tokens=300)
-                # Extract the first response if it exists, otherwise use a default message
-                explanation = response[0] if isinstance(response, list) and response else "No explanation generated."
+                # Call the LLM with the prompt
+                explanation = self.call_llm(prompt, max_tokens=300)
+                
             except Exception as e:
-                # Handle any errors by storing an error message
                 explanation = f"Error: {str(e)}"
+                
             explanations.append(explanation)
+            line_ids.append(line_id)
         
         # Create a temporary DataFrame with LineId and explanations
-        explanation_df = pl.DataFrame({
-            'LineId': rows_with_prompts['LineId'],
-            'explanation_result': explanations
-        })
-        
-        # Join the temporary DataFrame with the original DataFrame on 'LineId'
-        df = df.join(explanation_df, on='LineId', how='left')
+        if explanations:
+            explanation_df = pl.DataFrame({
+                'LineId': line_ids,
+                'explanation_result': explanations
+            })
+            
+            # Join the temporary DataFrame with the original DataFrame on 'LineId'
+            df = df.join(explanation_df, on='LineId', how='left')
+            print(f"Added {len(explanations)} explanations to the DataFrame")
+        else:
+            # If no explanations were generated, just add an empty column
+            df = df.with_columns(pl.lit(None).alias('explanation_result'))
+            print("No explanations were generated")
         
         return df
-
-    def getLabelResponses(self, df, client_dspy=True):
+    
+    def getLabelResponses(self, df):
         """
-        Gets the labels from the LLM for each prompt in the anomaly_label column,
-        and writes them into a new anomaly_result column.
+        Gets labels from the LLM for each prompt in the 'anomaly_label' column,
+        and writes them into a new 'anomaly_result' column.
         
         Parameters:
-        - df (pl.DataFrame): Polars DataFrame containing an 'anomaly_label' column with prompts
-                            (generated by PromptGenerator.generateLabelPrompts)
-        - client_dspy (bool): Whether to use the DSPy model (True) or raw API calls (False)
+        - df (pl.DataFrame): Polars DataFrame containing an 'anomaly_label' column with prompts.
         
         Returns:
-        - df (pl.DataFrame): Updated DataFrame with a new 'anomaly_result' column containing the LLM responses
+        - df (pl.DataFrame): Updated DataFrame with a new 'anomaly_result' column.
         """
         # Initialize the 'anomaly_result' column with null values
         df = df.with_columns(pl.lit(None).alias('anomaly_result'))
         
-        # Valid label categories from AnomalyLabeler signature
+        # Valid label categories
         valid_labels = ['application', 'authentication', 'io', 'memory', 'network', 'other']
-        
-        # Load the DSPy model or configure a basic LM
-        if client_dspy:
-            self.loadLM()
-            anomaly_labeler = dspy.ChainOfThought(AnomalyLabeler)
-        else:
-            # If not using DSPy, configure a basic LM
-            model = "openrouter/anthropic/claude-3-sonnet-20240229"
-            lm = dspy.LM(model, api_key=self.api_key)
-            dspy.configure(lm=lm)
         
         # Filter rows that have a prompt in the anomaly_label column
         rows_with_prompts = df.filter(pl.col('anomaly_label').is_not_null())
         
+        print(f"Generating labels for {rows_with_prompts.shape[0]} prompts...")
+        
         # Process each row with a prompt
         for row in rows_with_prompts.iter_rows(named=True):
             idx = row['LineId']
-            prompt = row['anomaly_label']  # This already contains the properly formatted prompt
+            prompt = row['anomaly_label']
             
             try:
-                if client_dspy:
-                    # Use the DSPy model for prediction
-                    prediction = anomaly_labeler(text=prompt) ## Fix this later
-                    label = prediction.label
-                else:
-                    # Use the pre-generated prompt directly with the LM
-                    response = lm(prompt)
-                    
-                    # Extract the label from the response
-                    response_text = response.strip().lower()
-                    # Find which valid label is mentioned in the response
-                    label = next((l for l in valid_labels if l in response_text), 'other')
+                # Add instructions to the prompt to ensure we get a valid label
+                label_prompt = f"""
+                {prompt}
+                
+                Based on the log message and context above, classify this anomaly into exactly ONE of these categories:
+                - application
+                - authentication
+                - io
+                - memory
+                - network
+                - other
+                
+                Reply with ONLY the category name, nothing else.
+                """
+                
+                # Call the LLM with the prompt
+                response = self.call_llm(label_prompt, max_tokens=50)
+                
+                # Extract the label from the response - look for any of the valid labels
+                response_text = response.strip().lower()
+                label = next((l for l in valid_labels if l in response_text), 'other')
                 
                 # Update the DataFrame with the label
                 df = df.with_columns(
@@ -123,6 +164,7 @@ class LLMPrompter:
                     .otherwise(pl.col('anomaly_result'))
                     .alias('anomaly_result')
                 )
+                
             except Exception as e:
                 print(f"Error processing LineId {idx}: {str(e)}")
                 # Default to 'other' in case of errors
