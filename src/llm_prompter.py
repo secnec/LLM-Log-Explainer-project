@@ -7,6 +7,7 @@ import dspy
 class LLMPrompter:
     def __init__(self):
         self.api_key = None
+        self.lm = None
         try:
             load_dotenv()
             self.api_key = os.getenv("OPENROUTER_API_KEY")
@@ -14,16 +15,55 @@ class LLMPrompter:
             raise Exception("Failed to init OpenRouter API")
 
     def updateLM(self, new_lm):
-        lm = dspy.LM(new_lm, self.api_key)
-        dspy.configure(lm=lm)
+        self.lm = dspy.LM(new_lm, self.api_key)
+        dspy.configure(lm=self.lm)
 
     def loadLM(self, path="./utils/classifier_optimize.json"):
         loaded_dspy_program = dspy.ChainOfThought(AnomalyLabeler)
         loaded_dspy_program.load(path)
 
     def getExplanationResponses(self, df):
-        #Gets the responses from the LLM for each prompt in the explanation prompts -column, and writes them into a new explanations-column
-        pass
+        """
+        Gets the responses from the LLM for each prompt in the 'explanation_prompt' column,
+        and writes them into a new 'explanation_result' column.
+
+        Parameters:
+        - df (pl.DataFrame): Polars DataFrame containing log data with an 'explanation_prompt' column.
+
+        Returns:
+        - df (pl.DataFrame): Updated DataFrame with a new 'explanation_result' column containing the LLM responses.
+        """
+        # Ensure LLM is configured
+        if not hasattr(dspy.settings, 'lm'):
+            self.updateLM("openrouter/anthropic/claude-3-sonnet-20240229")
+        
+        # Filter rows with non-null explanation prompts
+        rows_with_prompts = df.filter(pl.col('explanation_prompt').is_not_null())
+        
+        # List to store generated explanations
+        explanations = []
+        for row in rows_with_prompts.iter_rows(named=True):
+            prompt = row['explanation_prompt']
+            try:
+                # Call the LLM with the prompt, setting max_tokens to limit response length
+                response = self.lm(prompt, max_tokens=300)
+                # Extract the first response if it exists, otherwise use a default message
+                explanation = response[0] if isinstance(response, list) and response else "No explanation generated."
+            except Exception as e:
+                # Handle any errors by storing an error message
+                explanation = f"Error: {str(e)}"
+            explanations.append(explanation)
+        
+        # Create a temporary DataFrame with LineId and explanations
+        explanation_df = pl.DataFrame({
+            'LineId': rows_with_prompts['LineId'],
+            'explanation_result': explanations
+        })
+        
+        # Join the temporary DataFrame with the original DataFrame on 'LineId'
+        df = df.join(explanation_df, on='LineId', how='left')
+        
+        return df
 
     def getLabelResponses(self, df, client_dspy=True):
         """
