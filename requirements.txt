@@ -2,11 +2,5 @@ dspy
 ipykernel
 openai
 pandas
-polars
 sentence-transformers
 scikit-learn
-pytest
-sentence-transformers
-
-# Testing
-pytest
