@@ -39,7 +39,7 @@ class FileContextSelection:
         df = bgl_loader.execute()
         return df
     
-    
+
     def enhance(self, df: pl.DataFrame) -> pl.DataFrame:
         df = df.with_columns([
             pl.col("m_message").str.extract(r"\[([^\]]+)\]", group_index=1).alias("thread"),
@@ -71,7 +71,7 @@ class FileContextSelection:
             numeric_cols=["e_words_len", "e_trigrams_len", "e_chars_len", "e_lines_len", "e_event_id_len"],
             store_scores=True,
             print_scores=False,
-            auc_roc=False
+            auc_roc=True
         )
 
         anomaly_detector.test_train_split(df, test_frac=0.90, shuffle=True)
@@ -87,7 +87,7 @@ class FileContextSelection:
             numeric_cols=["e_words_len", "e_trigrams_len", "e_chars_len", "e_lines_len", "e_event_id_len"],
             store_scores=True,
             print_scores=False,
-            auc_roc=False
+            auc_roc=True
         )
 
         anomaly_detector.test_train_split(df, test_frac=0.90, shuffle=True)
@@ -95,6 +95,22 @@ class FileContextSelection:
         df = anomaly_detector.predict()
 
         return df
+
+    def get_SVM_anomalies(self, df: pl.DataFrame):
+        anomaly_detector = AnomalyDetector(
+            item_list_col="e_words",
+            numeric_cols=["e_words_len", "e_trigrams_len", "e_chars_len", "e_lines_len", "e_event_id_len"],
+            store_scores=True,
+            print_scores=False,
+            auc_roc=True
+        )
+
+        anomaly_detector.test_train_split(df, test_frac=0.90, shuffle=True)
+        anomaly_detector.train_OneClassSVM()
+        df = anomaly_detector.predict()
+
+        return df
+
 
     def get_token_count(self, df: pl.DataFrame):
         return df.height
@@ -119,7 +135,7 @@ class FileContextSelection:
             return None
         
         df = df.with_row_count(name="idx")
-        df = df.sort("pred_ano", descending=True)
+        df = df.sort("pred_ano_proba", descending=True)
         while True:
             limit = 100000
             tokens = self.get_token_count(df)
