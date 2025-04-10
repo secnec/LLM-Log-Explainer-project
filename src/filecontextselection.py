@@ -1,9 +1,12 @@
 
 import polars as pl
+import tiktoken
 from loglead.loaders.raw import RawLoader
 from loglead.loaders.bgl import BGLLoader
 from loglead.enhancers import EventLogEnhancer
 from loglead.anomaly_detection import AnomalyDetector
+
+LLM_MODEL = "gpt-4o-mini"
 
 class FileContextSelection:
     def __init__(self, filetype: str, anomaly_detection_method: str, file_path: str, **kwargs):
@@ -112,8 +115,11 @@ class FileContextSelection:
         return df
 
 
-    def get_token_count(self, df: pl.DataFrame):
-        return df.height
+    def get_token_count(self, df: pl.DataFrame, column_name: str) -> int:
+        encoding = tiktoken.encoding_for_model(LLM_MODEL)
+        texts = "\n".join(df[column_name].to_list())
+        tokens = encoding.encode(texts)
+        return len(tokens)
 
 
     def get_context(self):
@@ -138,7 +144,7 @@ class FileContextSelection:
         df = df.sort("pred_ano_proba", descending=True)
         while True:
             limit = 100000
-            tokens = self.get_token_count(df)
+            tokens = self.get_token_count(df, column_name= "m_message")
             if tokens <= limit:
                 df = df.sort("idx", descending=False)
                 df = df.drop("idx")
@@ -149,3 +155,8 @@ class FileContextSelection:
         return df
 
 
+if __name__ == "__main__":
+    test_df = pl.read_parquet("data/filtered_data_one_month.parquet")
+    test_df = test_df.sample(n=100)
+    dcs = FileContextSelection(file_path="data/filtered_data_one_month.parquet", filetype="LO2", anomaly_detection_method="IF")
+    print(dcs.get_token_count(test_df, column_name= "m_message"))
