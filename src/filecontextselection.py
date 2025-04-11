@@ -151,6 +151,7 @@ class FileContextSelection:
                 return df
             n_total = df.height
             n_drop = int(n_total * (1-limit/tokens))
+            n_drop = 50 if n_drop == 0 else n_drop
             df = df.slice(0, n_total - n_drop)
         return df
 
