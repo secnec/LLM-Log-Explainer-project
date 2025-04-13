@@ -1,12 +1,16 @@
-from utils.prompts import DEFAULT_EXPLANATION_PROMPT, DEFAULT_LABEL_PROMPT
+from utils.prompts import DEFAULT_EXPLANATION_PROMPT, DEFAULT_LABEL_PROMPT, DEFAULT_FILE_PROMPT
 import polars as pl
 from llm_prompter import LLMPrompter
+import os
+
 
 class PromptGenerator:
     def __init__(self):
         # Default prompt templates
         self.explanation_prompt = DEFAULT_EXPLANATION_PROMPT
         self.label_prompt = DEFAULT_LABEL_PROMPT
+        # Template for the combined file anomaly identification & explanation task
+        self.file_prompt = DEFAULT_FILE_PROMPT
 
         # Use LLMPrompter to generate label if not already present
         self.prompter = LLMPrompter()
@@ -137,6 +141,89 @@ class PromptGenerator:
             )
 
         return df
+    
+    # Helper: Formatter for the file combined prompt
+    def format_log_lines(self, df_context: pl.DataFrame) -> str | None:
+        """Formats log lines for file anomaly identification & explanation."""
+        # Required columns for display: message, score
+        if "pred_ano_proba" not in df_context.columns:
+                print(f"Error: Formatting requires 'pred_ano_proba'. Found: {df_context.columns}")
+                return None
+        msg_col = "m_message"
+        if msg_col not in df_context.columns:
+                print(f"Error: Formatting requires message column ('{msg_col}'). Found: {df_context.columns}")
+                return None
+
+        formatted_lines = []
+        for row in df_context.select([msg_col, "pred_ano_proba"]).iter_rows(named=True):
+            score = row.get("pred_ano_proba", "N/A")
+            msg = str(row.get(msg_col, "")).strip()
+            msg_snippet = (msg[:150] + '...') if len(msg) > 150 else msg # Concise snippet
+
+            try:
+                    score_fmt = f"{float(score):.4f}"
+            except (ValueError, TypeError, SystemError):
+                    score_fmt = str(score)
+
+            formatted_lines.append(f"(Score: {score_fmt}) Msg: {msg_snippet}")
+
+        return "\n".join(formatted_lines)
+
+    # File Prompt Generator
+    def generate_file_explanation_prompt(self, filename: str, df_context: pl.DataFrame, prompt_template=None) -> str | None:
+        """
+        Generates a single prompt for file anomaly identification & explanation.
+
+        Parameters:
+        - filename (str): The full path or basename of the log file.
+        - df_context (pl.DataFrame): DataFrame context containing
+                                        message column and 'pred_ano_proba'.
+        - prompt_template (str, optional): Custom prompt template. Defaults to
+                                            self.file_prompt.
+
+        Returns:
+        - str | None: The generated prompt string, or None on error.
+        """
+        if df_context is None:
+            print("Error: Cannot generate file explanation prompt with empty context.")
+            return None
+
+        # Filename Parsing, e.g. "TOKEN_access_token_auth_header_error_401.log.parquet"
+        base_filename = os.path.basename(filename)
+        error_type = "Unknown"
+        try:
+            parts = base_filename.split('_')
+            if len(parts) > 3 and parts[-1].endswith(('.log', '.parquet')):
+                meaningful_parts = parts[1:-2] # Exclude 'TOKEN' and '.log.parquet'
+                error_type = ' '.join(meaningful_parts).strip()
+                if not error_type: error_type = "No anomaly in filename"
+            else:
+                    name_part = base_filename.split('.')[0]; error_type = name_part.replace('_', ' ').replace('TOKEN', '').strip()
+        except Exception as e:
+            print(f"Warning: Error parsing filename '{base_filename}': {e}")
+            error_type = "error suspected based on filename"
+
+        # Format Log Lines
+        formatted_logs_str = self.format_log_lines(df_context)
+        if formatted_logs_str is None:
+            print("Error: Failed to format log lines for the prompt.")
+            return None
+
+        # Generates a single prompt for file anomaly identification & explanation
+        template_to_use = prompt_template if prompt_template else self.file_prompt
+        try:
+            final_prompt = template_to_use.format(
+                filename=base_filename,
+                error_type=error_type,
+                formatted_log_lines=formatted_logs_str 
+            )
+            return final_prompt
+        except KeyError as e:
+                print(f"Error formatting combined prompt template. Missing key: {e}")
+                return None
+        except Exception as e:
+            print(f"An unexpected error occurred during combined prompt formatting: {e}")
+            return None
 
     def getContextLines(self, df):
         # Placeholder for context line retrieval
