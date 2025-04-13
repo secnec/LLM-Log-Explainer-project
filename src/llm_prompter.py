@@ -35,7 +35,7 @@ class LLMPrompter:
         """
         # Ensure LLM is configured
         if not hasattr(dspy.settings, 'lm'):
-            self.updateLM("openrouter/anthropic/claude-3-sonnet-20240229")
+            self.updateLM("openrouter/openai/gpt-4o-mini")
         
         # Filter rows with non-null explanation prompts
         rows_with_prompts = df.filter(pl.col('explanation_prompt').is_not_null())
@@ -90,7 +90,7 @@ class LLMPrompter:
             anomaly_labeler = dspy.ChainOfThought(AnomalyLabeler)
         else:
             # If not using DSPy, configure a basic LM
-            model = "openrouter/anthropic/claude-3-sonnet-20240229"
+            model = "openrouter/openai/gpt-4o-mini"
             lm = dspy.LM(model, api_key=self.api_key)
             dspy.configure(lm=lm)
         
@@ -134,3 +134,22 @@ class LLMPrompter:
                 )
         
         return df
+
+    def get_file_explanation_response(self, file_explanation_prompt: str) -> str | None:
+        """
+        Gets a single explanation response from the LLM for a file-level prompt.
+        """
+        if not hasattr(dspy.settings, 'lm'):
+            self.updateLM("openrouter/openai/gpt-4o-mini")
+        if not file_explanation_prompt: return "Error: Received an empty prompt."
+        try:
+            print("Sending combined file prompt to LLM...")
+            # Adjust max_tokens if needed for combined identify/explain
+            response = self.lm(file_explanation_prompt, max_tokens=800) # Potentially longer response
+            # Handle response list/string
+            if isinstance(response, list) and response: return response[0].strip()
+            if isinstance(response, str): return response.strip()
+            return f"LLM returned no valid response. Raw: {response}"
+        except Exception as e:
+            print(f"Error getting file explanation from LLM: {e}")
+            return f"Error during LLM communication: {str(e)}"
