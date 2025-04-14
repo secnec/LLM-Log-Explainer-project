@@ -12,12 +12,13 @@ class LLMPrompter:
         if not self.api_key:
             raise Exception("Failed to load OPENROUTER_API_KEY from environment")
         
-        self.model = "openrouter/openai/gpt-4o-mini"
-        self.api_url = "https://openrouter.ai/api/v1/"
+        self.model = "openai/gpt-4o-mini"   
+        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         
         self.headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://localhost"
         }
         
         print(f"Initialized LLMPrompter with OpenRouter API (model: {self.model})")
@@ -26,7 +27,7 @@ class LLMPrompter:
         """Change the model being used"""
         self.model = model_name
         print(f"Changed model to: {self.model}")
-    
+
     def call_llm(self, prompt, max_tokens=800):
         """Make a direct API call to OpenRouter"""
         try:
@@ -41,21 +42,21 @@ class LLMPrompter:
             response = requests.post(
                 self.api_url,
                 headers=self.headers,
-                data=json.dumps(payload)
+                json=payload
             )
             
             if response.status_code != 200:
                 print(f"API error: {response.status_code}")
-                print(response.text)
+                print(f"Response: {response.text[:100]}")
                 return f"API Error: {response.status_code}"
-                
+                    
             result = response.json()
             return result["choices"][0]["message"]["content"]
-            
+                
         except Exception as e:
             print(f"Error calling LLM: {str(e)}")
             return f"Error: {str(e)}"
-    
+        
     def getExplanationResponses(self, df):
         """
         Gets explanations from the LLM for each prompt in the 'explanation_prompt' column,
