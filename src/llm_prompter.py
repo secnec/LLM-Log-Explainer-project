@@ -13,7 +13,7 @@ class LLMPrompter:
             raise Exception("Failed to load OPENROUTER_API_KEY from environment")
         
         self.model = "openrouter/openai/gpt-4o-mini"
-        self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.api_url = "https://openrouter.ai/api/v1/"
         
         self.headers = {
             "Content-Type": "application/json",

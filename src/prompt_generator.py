@@ -1,6 +1,6 @@
 from utils.prompts import DEFAULT_EXPLANATION_PROMPT, DEFAULT_LABEL_PROMPT, DEFAULT_FILE_PROMPT
 import polars as pl
-from llm_prompter import LLMPrompter
+from src.llm_prompter import LLMPrompter
 import os
 
 class PromptGenerator:
