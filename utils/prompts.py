@@ -1,13 +1,13 @@
 # utils/prompts.py
 
 DEFAULT_EXPLANATION_PROMPT = """
-You are an expert in analyzing software logs to identify and explain anomalies. Below are examples to help you understand the task:
+You're a high-performance computing specialist analyzing supercomputer log anomalies. Explain why this log entry is anomalous.
 
-**Example 1: Normal Log**
-Log Line: 
-"Sequence ID: 1719688444__correct,
+NORMAL LOG EXAMPLE:
+Sequence ID: 1719688444__correct,
 Label: correct,
 Anomaly Score: 73.48012061095164,
+
 Log Messages:
 <init> - normalised = /oauth2/token
 getConfigStream - Config loaded from externalized folder for primary.jks in /config
@@ -17,13 +17,12 @@ getPrivateKey - filename = primary.jks key = selfsigned
 handleAuthorizationCode - code = OstfU9uASoy7PIX6vU7X4Q...
 <init> - normalised = /oauth2/token
 <init> - normalised = /oauth2/token
-<init> - normalised = /oauth2/token"
-Explanation: 
-"This sequence is normal because it follows the expected OAuth2 authorization code flow. It includes successful configuration loading (`getConfigStream`), private key retrieval (`getPrivateKey`), validation of credentials (`debug - validate`), and handling of the authorization code (`handleAuthorizationCode`). The low anomaly score and "correct" label confirm that this sequence represents typical, error-free behavior."
+<init> - normalised = /oauth2/token
 
-**Example 2: Anomalous Log**
-Log Line: 
-"Sequence ID: 1719756844__invalid_code_verifier_format_PKCE_400,
+EXPLANATION: This sequence follows the expected OAuth2 authorization flow with successful config loading, key retrieval, validation, and authorization code handling. The low anomaly score confirms typical behavior.
+
+ANOMALOUS LOG EXAMPLE:
+Sequence ID: 1719756844__invalid_code_verifier_format_PKCE_400,
 Label: invalid_code_verifier_format_PKCE_400,
 Anomaly Score: 273.50457034572565,
 Log Messages:
@@ -35,127 +34,88 @@ getConfigStream - Config loaded from externalized folder for primary.jks in /con
 <init> - path = /oauth2/token, base path is set to: null
 <init> - path =/oauth2/token
 debug - validate( "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", "Basic NjM3MjI5OGUtYzQxNC00YzRlLWE4MDUtZGJiNDE5N2ZhYTA0OkxjM2NkcnU3UzhLR0lmd3hWODFidGc=", authorization)
-<init> - path = /..."
-Explanation: 
-"This sequence is anomalous due to an issue in the Proof Key for Code Exchange (PKCE) flow, as indicated by the label `invalid_code_verifier_format_PKCE_400`. The repeated `getConfigStream` entries and multiple `<init> - path = /oauth2/token, base path is set to: null` suggest potential misconfiguration or redundant attempts to process the request. The high anomaly score and the 400 error label point to a failure caused by an invalid code verifier format. This anomaly could stem from a programming error in client-side implementation or an intentional attack vector."
 
-Now, explain the following anomalous log line by following these steps:
+EXPLANATION: This sequence is anomalous due to an invalid code verifier format in the PKCE flow. The repeated getConfigStream entries, multiple null base path initializations, and high anomaly score (273.5) indicate a client-side request failure.
 
-1. **Identify the Anomalous Log Line and Label (if provided)**:
-   - Review the log line: {anomalous_log_str}
-   - Note the label (if available): {label_str}
+Analyze this anomalous log entry and context:
+<anomalous_log>
+{anomalous_log_str}
+</anomalous_log>
+<label>
+{label_str}
+</label>
+<context>
+{context_str}
+</context>
+Provide a clear, technical explanation of the anomaly, focusing on:
 
-2. **Compare to the Normal Example**:
-   - Compare the anomalous log to the normal example provided.
-   - Identify key differences in content, structure, or behavior.
+1. What specific error or issue is occurring
+2. How it deviates from normal operation
+3. Likely root cause
+4. Potential system impact
 
-3. **Analyze the Log and Context**:
-   - Examine the anomalous log and its context: {context_str}
-   - Look for unusual patterns, errors, or deviations.
-
-4. **Hypothesize Potential Causes**:
-   - Based on the differences and context, propose possible reasons for the anomaly.
-
-5. **Explain the Label (if provided)**:
-   - If a label is given, interpret it in the context of your analysis.
-
-6. **Provide a Natural Language Explanation**:
-   - Summarize why the log is anomalous and its likely root causes in clear, concise language.
-
-Generate a detailed explanation following these steps.
+Be direct and specific without unnecessary text.
 """
 
 
 DEFAULT_LABEL_PROMPT = """
-  Below are examples of log lines with their assigned labels and explanations to illustrate the labeling reasoning.
 
-  ---
+You're a high-performance computing expert specializing in supercomputer log analysis. Classify the log entry into exactly one category.
+Categories:
 
-  **Label: application**
-  Example 1:
-  Log Line: 373746 node-121 action error 1085979750 1 halt (command 2991) error: couldn\047t connect to console (state = refused),<label>application</label>
-  Explanation: This log line is labeled 'application' because it indicates an error within an application-level process. The 'couldn’t connect to console' message suggests a failure in a software component (likely a management or service application) attempting to interact with a console, which is a typical application-specific issue.
+- application: Software app issues, service failures, component errors
+- authentication: Login problems, credential validation, access control
+- io: File system errors, data stream issues, storage problems
+- memory: Memory allocation failures, leaks, buffer issues
+- network: Connection problems, packet issues, network service errors
+- other: General system messages that don't fit other categories
 
-  Example 2:
-  Log Line: 12-18 18:31:06.771 1795 1808 v activity manager: attempted to start a foreground service ( component info (com.sankuai.meituan/com.dianping.base.push.pushservice.dp.dp push service)
-   ) with a broken notification (no icon: notification(pri=0 content view=null vibrate=null sound=null defaults=0x0 flags=0x40 color=0x00000000 vis=private)),<label>application</label>
-  Explanation: The label 'application' is assigned because the log describes a failure in an Android application’s foreground service (a push service). The issue stems from a malformed notification, which is an application-layer construct, indicating a problem in how the app manages its functionality.
+Examples:
 
-  ---
+Example 1:
+Log: "java.io.io exception: failed on local exception: java.io.io exception: couldn't set up io streams; host details : local host is: "minint-fnanli5/127.0.0.1"; destination host is: "msra-sa-41":8030;"
+Reasoning: This log shows a Java IO exception specifically mentioning "couldn't set up io streams" between hosts. This is clearly related to input/output operations failing rather than network connectivity itself.
+Label: io
 
-  **Label: authentication**
-  Example 1:
-  Log Line: dec 15 08:06:25 labsz sshd[16763]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=103.99.0.122 user=uucp,<label>authentication</label>
-  Explanation: This log line is labeled 'authentication' because it explicitly reports an authentication failure in an SSH session. The use of 'pam_unix(sshd:auth)' and user credential details point to a security process at the authentication layer, where the system rejected a login attempt.
+Example 2:
+Log: "dec 11 21:21:19 labsz sshd[3466]: pam_unix(sshd): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=103.99.0.122 user=ftp"
+Reasoning: This log shows an SSH daemon (sshd) reporting an authentication failure. The message contains "pam_unix(sshd): authentication failure" which explicitly indicates a problem with user credentials or login process.
+Label: authentication
 
-  Example 2:
-  Log Line: jan 4 20:23:26 labsz sshd[6250]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=103.79.142.55 user=uucp,<label>authentication</label>
-  Explanation: The 'authentication' label applies due to the reported failure in the SSH authentication process. The log highlights a rejected login attempt from a remote host, with 'pam_unix' indicating the authentication module involved.
+Example 3:
+Log: "081111 030115 18071 info dfs. data node$ block receiver: receiving empty packet for block blk_7717782362699139185"
+Reasoning: This log indicates a network-related issue where a data node is receiving an empty packet for a specific block. This suggests a problem with data transmission over the network rather than an IO or application error.
+Label: network
 
-  ---
+Example 4:
+Log: "373800 node-147 action error 1085979770 1 halt (command 2992) error: couldn\047t connect to console (state = refused)"
+Reasoning: This log shows an application action error where a command to halt node-147 failed because it couldn't connect to the console. This is related to application functionality rather than pure network connectivity.
+Label: application
 
-  **Label: io**
-  Example 1:
-  Log Line: java.io.io exception: failed on local exception: java.io.io exception: couldn't set up io streams; host details : local host is: "minint-fnanli5/127.0.0.1"; destination host is: "msra-sa-41":8030;,<label>io</label>
-  Explanation: This log is labeled 'io' because it describes an input/output error involving Java I/O streams. The 'couldn’t set up io streams' message points to a failure in establishing communication channels between hosts, a classic I/O issue.
+Example 5:
+Log: "- 1131577111 2005.11.09 cn3 nov 9 14:58:31 cn3/cn3 kernel: ext3 fs on sda1, internal journal"
+Reasoning: This log shows a system kernel message about the ext3 filesystem. It's an informational message rather than an error and doesn't fit clearly into the other categories.
+Label: other
 
-  Example 2:
-  Log Line: 2015-10-18 18:05:45,281 warn [ response processor for block bp-1347369012-10.190.173.170-1444972147527:blk_1073743509_2728] org.apache.hadoop.hdfs.dfs client: slow read processor read fields took 54719ms (threshold=30000ms); ack: seqno: -2 status: success status: error downstream ack time nanos: 0, targets: [10.86.164.15:50010, 10.86.169.121:50010],<label>io</label>
-  Explanation: The 'io' label fits because it reports a slow I/O operation in an HDFS client, where reading data took excessively long (54,719ms vs. a 30,000ms threshold), indicating an I/O bottleneck.
+Here's the log and context to analyze:
+<log entry>
+Log Line: {log_str}
+</log entry>
+<context>
 
-  ---
+Context Lines:
+{context_str}
+</context>
 
-  **Label: memory**
-  Example 1:
-  Log Line: 081111 090159 18 warn dfs.fs dataset: unexpected error trying to delete block blk_8065317379137806685. block info not found in volume map.,<label>memory</label>
-  Explanation: This log is labeled 'memory' because the error suggests a problem with in-memory data management. The 'block info not found in volume map' implies that the system expected data in memory but couldn’t locate it, indicating potential memory corruption.
+Think through the following steps:
 
-  Example 2:
-  Log Line: 081111 090204 18 warn dfs.fs dataset: unexpected error trying to delete block blk_8497184476607886349. block info not found in volume map.,<label>memory</label>
-  Explanation: The 'memory' label is appropriate as the log indicates a failure to find block information in a volume map, typically held in memory, pointing to a memory-related error.
+1. Identify what component or service is mentioned in the log
+2. Determine what operation was being attempted
+3. Analyze what specific error or issue occurred
+4. Match the issue to the most appropriate category
 
-  ---
-
-  **Label: network**
-  Example 1:
-  Log Line: 081110 223431 16388 info dfs. data node$ packet responder: packet responder 1 for block blk_-9222809703637296826 terminating,<label>network</label>
-  Explanation: This log is labeled 'network' because it involves the termination of a network-related process (packet responder) in a data node, likely part of a distributed system, pertaining to network communication.
-
-  Example 2:
-  Log Line: 2015-10-17 16:17:16,773 info [ container launcher #7] org.apache.hadoop.ipc. client: retrying connect to server: 04dn8iq.fareast.corp.microsoft.com/10.86.164.9:64484. already tried 0 time(s); max retries=45,<label>network</label>
-  Explanation: The 'network' label applies because the log describes a network connection retry attempt to a server, indicating a network-layer issue like a timeout or unreachable host.
-
-  ---
-
-  **Label: other**
-  Example 1:
-  Log Line: 12-18 10:52:08.645 808 547 d [hw camera] ipp algo smartae: virtual void android:: ipp algo smartae::on new arrival(void *, void *, int, int, int) enter,<label>other</label>
-  Explanation: This log is labeled 'other' because it doesn’t fit into specific error categories like application, authentication, I/O, memory, or network. It’s a debug message about a camera algorithm, more of a general system log.
-
-  Example 2:
-  Log Line: - 1131573795 2005.11.09 bn347 nov 9 14:03:15 bn347/bn347 kernel: ext3 fs on sda6, internal journal,<label>other</label>
-  Explanation: The 'other' label is used because this is an informational kernel message about filesystem setup, not an error tied to a specific category like application or network.
-
-  ---
-
-  Analyze the following log entry, context and classify it into one of these categories:
-   - application: Issues with the application logic, workflows, or functionality
-   - authentication: Issues with user authentication, permissions, or security
-   - io: Issues with input/output operations, file handling, or storage
-   - memory: Issues with memory allocation, leaks, or usage
-   - network: Issues with network connectivity, protocols, or transmission
-   - other: Any other type of anomaly that doesn't fit the above categories
-
-   <log entry>
-   Log Line: {log_str}
-   </log entry>
-   <context>
-   Context Lines:
-   {context_str}
-   </context>
-
-  Return ONLY one of these exact category names without explanation.
-  """
+Respond with ONLY one category name - no explanation, no additional text.
+"""
 
 # NEW: Combined Prompt for File Anomaly Identification & Explanation
 DEFAULT_FILE_PROMPT = """

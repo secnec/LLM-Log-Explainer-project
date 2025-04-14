@@ -83,7 +83,7 @@ class LLMPrompter:
             
             try:
                 # Call the LLM with the prompt
-                explanation = self.call_llm(prompt, max_tokens=300)
+                explanation = self.call_llm(prompt, max_tokens=1000)
                 
             except Exception as e:
                 explanation = f"Error: {str(e)}"
@@ -138,21 +138,20 @@ class LLMPrompter:
             try:
                 # Add instructions to the prompt to ensure we get a valid label
                 label_prompt = f"""
-                {prompt}
+                {prompt}"""
                 
-                Based on the log message and context above, classify this anomaly into exactly ONE of these categories:
-                - application
-                - authentication
-                - io
-                - memory
-                - network
-                - other
+                # Based on the log message and context above, classify this anomaly into exactly ONE of these categories:
+                # - application
+                # - authentication
+                # - io
+                # - memory
+                # - network
+                # - other
                 
-                Reply with ONLY the category name, nothing else.
-                """
+                # Reply with ONLY the category name, nothing else.
                 
                 # Call the LLM with the prompt
-                response = self.call_llm(label_prompt, max_tokens=50)
+                response = self.call_llm(label_prompt, max_tokens=1000)
                 
                 # Extract the label from the response - look for any of the valid labels
                 response_text = response.strip().lower()
@@ -185,7 +184,7 @@ class LLMPrompter:
         try:
             print("Sending combined file prompt to LLM...")
             # Adjust max_tokens if needed for combined identify/explain
-            response = self.lm(file_explanation_prompt, max_tokens=800) # Potentially longer response
+            response = self.lm(file_explanation_prompt, max_tokens=1000) # Potentially longer response
             # Handle response list/string
             if isinstance(response, list) and response: return response[0].strip()
             if isinstance(response, str): return response.strip()
