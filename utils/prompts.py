@@ -156,3 +156,43 @@ DEFAULT_LABEL_PROMPT = """
 
   Return ONLY one of these exact category names without explanation.
   """
+
+# NEW: Combined Prompt for File Anomaly Identification & Explanation
+DEFAULT_FILE_PROMPT = """
+You are an expert log analysis assistant tasked with analyzing a log file snippet flagged as anomalous because it contains at least one erroneous log line.
+
+**File Information:**
+- Filename: `{filename}`
+- **Potential Error Hint:** The filename suggests the primary error might be related to: `{error_type}`.
+
+**Log Snippet & Task:**
+Below is a sequence of log lines extracted from the file. Your task is to **identify the specific line(s)** in this snippet that are most likely the anomaly (or directly related to it) AND **provide a detailed explanation** for *why* they are considered anomalous, referencing the filename hint and log content.
+
+**Log Snippet:**
+(Format: (Score: Anomaly Score) Msg: Log Message Snippet)
+{formatted_log_lines}
+
+**Instructions:**
+1.  **Prioritize Filename Hint:** Use the potential error type (`{error_type}`) as your primary guide.
+2.  **Analyze Chronological Snippet:** Read through the ordered lines to understand the context.
+3.  **Identify & Explain Anomalous Line(s):**
+    *   Pinpoint the line(s) most likely related to the `{error_type}` or showing clear errors/high scores.
+    *   For **each** identified line:
+        *   Quote the **first ~30 characters** of its message content (starting after "Msg: ") for reference.
+        *   Provide a **detailed explanation** covering:
+            *   Why this specific line is anomalous or relevant to the suspected error (`{error_type}`).
+            *   How its content (keywords, errors, status codes) supports this.
+            *   How its anomaly score (`Score: ...`) relates, if significant.
+            *   Comparison to expected normal behavior (implicitly or explicitly).
+            *   Potential root causes if evident.
+4.  **Address Missing Error Message (If Applicable):** If the *exact* error message matching the filename (e.g., a line explicitly stating "401 Unauthorized") is *NOT* present in this snippet, **state this explicitly**. Then, explain how the snippet *still supports* the conclusion that the filename's error occurred (e.g., "Although the exact 401 error message isn't shown in this snippet, the presence of stack traces [lines X, Y] with high anomaly scores strongly suggests they resulted from the 401 error indicated by the filename.").
+5.  **Summarize:** Conclude with a concise summary of the identified anomaly and its nature within the file context.
+
+**Output Format:**
+-   Filename Anomaly Indication: [State the error suggested by the filename]
+-   Analysis and Explanation:
+    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line...]
+    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line...]
+    -   [If applicable]: Explicit statement that the direct error message is missing but the snippet provides related evidence (like stack traces).
+-   Summary: [Concise summary of the overall anomaly found/inferred in the file snippet]
+"""

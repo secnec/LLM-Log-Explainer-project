@@ -19,3 +19,5 @@ openai
 # Development and testing
 ipykernel
 pytest
+sentence-transformers
+tiktoken

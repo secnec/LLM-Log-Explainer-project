@@ -6,3 +6,5 @@ LLMs/data/
 .pytest_cache
 venv
 myenv
+src/data/
+.DS_Store

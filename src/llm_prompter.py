@@ -12,7 +12,7 @@ class LLMPrompter:
         if not self.api_key:
             raise Exception("Failed to load OPENROUTER_API_KEY from environment")
         
-        self.model = "anthropic/claude-3-sonnet-20240229"
+        self.model = "openrouter/openai/gpt-4o-mini"
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         
         self.headers = {
@@ -174,5 +174,21 @@ class LLMPrompter:
                     .otherwise(pl.col('anomaly_result'))
                     .alias('anomaly_result')
                 )
-        
+       
         return df
+
+    def get_file_explanation_response(self, file_explanation_prompt: str) -> str | None:
+        """
+        Gets a single explanation response from the LLM for a file-level prompt.
+        """
+        try:
+            print("Sending combined file prompt to LLM...")
+            # Adjust max_tokens if needed for combined identify/explain
+            response = self.lm(file_explanation_prompt, max_tokens=800) # Potentially longer response
+            # Handle response list/string
+            if isinstance(response, list) and response: return response[0].strip()
+            if isinstance(response, str): return response.strip()
+            return f"LLM returned no valid response. Raw: {response}"
+        except Exception as e:
+            print(f"Error getting file explanation from LLM: {e}")
+            return f"Error during LLM communication: {str(e)}"
