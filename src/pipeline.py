@@ -5,41 +5,48 @@ import argparse
 from dotenv import load_dotenv
 
 from src.contextselection import ContextSelection
+from src.filecontextselection import FileContextSelection
 from src.prompt_generator import PromptGenerator
 from src.llm_prompter import LLMPrompter
 from src.utils.prompt_utils import clean_prompts, format_csv_for_presentation, determine_label, generate_explanation
 
-def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=True):
+def run_pipeline(df, **kwargs):
     """Run anomaly detection and explanation pipeline"""
-    if verbose:
-        print(f"Running pipeline with threshold {threshold}...\n")
+    if kwargs["verbose"]:
+        print(f"Running pipeline with threshold {kwargs['threshold']}...\n")
     
     # Context Selection
-    if verbose:
+    if kwargs["verbose"]:
         print("=== Context Selection ===")
     
     try:
-        context_selection = ContextSelection(
-            selection_strategy="semantic", 
-            df_path=None,
-            column_name="e_message_normalized", 
-            top_k_far=3, 
-            top_k_near=2,
-            drop_duplicates=False
-        )
-        
-        context_selection.set_in_memory_df(df)
-        df_with_context = context_selection.getLexicalContext(df)
-        
-        if verbose:
-            print(f"Context selection complete.")
-            anomalies = df_with_context.filter(pl.col('anomaly_score') >= threshold)
-            print(f"Found {anomalies.shape[0]} anomalies with score >= {threshold}")
+        if kwargs["anomaly_level"] == 'file':
+            file_context_selector = FileContextSelection(file_path=kwargs["input"], filetype=kwargs["log_type"], anomaly_detection_method=kwargs["ad_method"])
+            df_with_context = file_context_selector.get_context()
+
+        elif kwargs["anomaly_level"] == 'line':
+            context_selection = ContextSelection(
+                selection_strategy="semantic", 
+                df_path=None,
+                column_name=kwargs["context_column"], 
+                top_k_far=3, 
+                top_k_near=2,
+                drop_duplicates=False,
+                verbose=kwargs["verbose"],
+            )
+            
+            context_selection.set_in_memory_df(df)
+            df_with_context = context_selection.getLexicalContext(df)
+            
+            if kwargs["verbose"]:
+                print(f"Context selection complete.")
+                anomalies = df_with_context.filter(pl.col('anomaly_score') >= kwargs["threshold"])
+                print(f"Found {anomalies.shape[0]} anomalies with score >= {kwargs['threshold']}")
     
     except Exception as e:
         df_with_context = df.clone()
         
-        for row in df.filter(pl.col('anomaly_score') >= threshold).iter_rows(named=True):
+        for row in df.filter(pl.col('anomaly_score') >= kwargs["threshold"]).iter_rows(named=True):
             line_id = row['LineId']
             
             context_start = max(1, line_id - 5)
@@ -61,29 +68,26 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
                         .alias('lexical_context')
                     )
     
-    # Prompt Generation
-    if verbose:
-        print("\n=== Prompt Generation ===")
+    # Prompt Generation for Labels
+    if kwargs["verbose"]:
+        print("\n=== Prompt Generation for Labels ===")
     
     try:
         prompt_generator = PromptGenerator()
-        df_with_prompts = prompt_generator.generateLabelPrompts(threshold, df_with_context)
+        df_with_prompts = prompt_generator.generateLabelPrompts(kwargs["threshold"], df_with_context)
         
-        if verbose:
+        if kwargs["verbose"]:
             prompts_count = df_with_prompts.filter(pl.col('anomaly_label').is_not_null()).shape[0]
             print(f"Generated {prompts_count} label prompts")
     
     except Exception as e:
         return df_with_context
     
-    # LLM Integration
-    if verbose:
-        print("\n=== LLM Integration ===")
-    
-    if test_mode:
-        if verbose:
+    if kwargs["test_mode"]:
+        if kwargs["verbose"]:
             print("Test mode: Simulating LLM responses")
-        
+            print("\n=== LLM Prediction of Labels ===")
+            # LLM Prediction of Labels            
         labels = []
         for row in df_with_prompts.iter_rows(named=True):
             if row.get('anomaly_label') is not None:
@@ -95,9 +99,14 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
         df_with_labels = df_with_prompts.with_columns(
             pl.Series(labels).alias('anomaly_result')
         )
+        # Prompt Generation for Explanations
+        if kwargs["verbose"]:
+            print("\n=== Prompt Generation for Explanations ===")
+        df_with_explanations = prompt_generator.generateExplanationPrompts(kwargs["threshold"], df_with_labels)
         
-        df_with_explanations = prompt_generator.generateExplanationPrompts(threshold, df_with_labels)
-        
+        # LLM Generation of Explanations
+        if kwargs["verbose"]:
+            print("\n=== LLM Prediction of Explanations ===")
         explanations = []
         for row in df_with_explanations.iter_rows(named=True):
             if row.get('explanation_prompt') is not None:
@@ -114,15 +123,22 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
     else:
         llm_prompter = LLMPrompter()
         
-        if verbose:
+        if kwargs["verbose"]:
             print("Getting label responses from LLM...")
         df_with_labels = llm_prompter.getLabelResponses(df_with_prompts)
+        if kwargs["verbose"]:
+            print("\n=== Prompt Generation for Explanations ===")
+        if kwargs["anomaly_level"] == 'file':
+            df_with_explanations = prompt_generator.generate_file_explanation_prompt(filename=kwargs["input"], df_context=df_with_labels)
+        else:
+            df_with_explanations = prompt_generator.generateExplanationPrompts(kwargs["threshold"], df_with_labels)
         
-        df_with_explanations = prompt_generator.generateExplanationPrompts(threshold, df_with_labels)
-        
-        if verbose:
+        if kwargs["verbose"]:
             print("Getting explanation responses from LLM...")
-        final_df = llm_prompter.getExplanationResponses(df_with_explanations)
+        if kwargs["anomaly_level"] == 'file':
+            final_df = llm_prompter.get_file_explanation_response(df_with_explanations)
+        elif kwargs["anomaly_level"] == 'line':
+            final_df = llm_prompter.getExplanationResponses(df_with_explanations)
     
     # Rename columns for the final output format
     final_df = final_df.with_columns(
@@ -130,8 +146,8 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
         pl.col('explanation_result').alias('anomaly_explanation')
     )
     
-    if clean_results:
-        if verbose:
+    if kwargs["clean_results"]:
+        if kwargs["verbose"]:
             print("\n=== Cleaning Prompts ===")
         final_cleaned_df = clean_prompts(final_df)
         return final_cleaned_df
@@ -233,15 +249,19 @@ def main():
     parser.add_argument('--score-column', type=str, default='pred_ano_proba', help='Anomaly score column name')
     parser.add_argument('--id-column', type=str, default='row_nr', help='ID column name')
     parser.add_argument('--message-column', type=str, default='m_message', help='Message column name')
+    parser.add_argument('--context-column', type=str, default='e_message_normalized', help='Column name to be used for context selection')
+    parser.add_argument('--log-type', choices=['BGL', 'LO2', 'mixed'], default='BGL')
+    parser.add_argument('--anomaly-level', choices=['line', 'file'], default='line', help='Anomaly level, used for context selection')
+    parser.add_argument('--ad-method', choices=['LOF', 'IF'], default='LOF', help='Anomaly detection method')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
-    parser.add_argument('--test', action='store_true', help='Run in test mode')
-    parser.add_argument('--no-clean', action='store_true', help='Skip prompt cleaning')
+    parser.add_argument('--test-mode', action='store_true', help='Run in test mode')
+    parser.add_argument('--clean_results', action='store_true', help='Clean the prompt')
     parser.add_argument('--output', type=str, default='anomaly_results.csv', help='Output file path')
     args = parser.parse_args()
     
     load_dotenv()
     
-    if not args.test and not os.getenv('OPENROUTER_API_KEY'):
+    if not args.test_mode and not os.getenv('OPENROUTER_API_KEY'):
         print("API key not found in environment, using test mode")
         args.test = True
     
@@ -266,10 +286,7 @@ def main():
     
     result_df = run_pipeline(
         df, 
-        threshold=args.threshold, 
-        verbose=args.verbose, 
-        test_mode=args.test,
-        clean_results=not args.no_clean
+        **args.__dict__,
     )
     
     format_csv_for_presentation(result_df, args.output)

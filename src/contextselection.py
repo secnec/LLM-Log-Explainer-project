@@ -10,16 +10,17 @@ from typing import Union, List
 EMBEDDER_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 class Embedder:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, verbose: bool = False):
         self.model_name = model_name
         self.model = SentenceTransformer(model_name)
+        self.verbose = verbose
 
     def embed(self, text: Union[str, List[str], pl.Series]) -> np.ndarray:
         if isinstance(text, pl.Series):
             text = text.to_list()
         elif isinstance(text, str):
             text = [text]
-        return self.model.encode(text, show_progress_bar=True) 
+        return self.model.encode(text, show_progress_bar=self.verbose) 
 
 class ContextSelection:
     def __init__(self, selection_strategy: str, df_path: str, column_name: str, top_k_far: int, top_k_near: int, **kwargs):
@@ -31,9 +32,9 @@ class ContextSelection:
         self.drop_duplicates = kwargs.get('drop_duplicates', False)
         self.limit_date = kwargs.get('limit_date', False)
         self.embedder_model = kwargs.get('embedder_model', EMBEDDER_MODEL)
-        self.embedder = Embedder(self.embedder_model)
+        self.embedder = Embedder(self.embedder_model, verbose=kwargs.get('verbose', False))
         self.in_memory_df = None
-    
+
     def set_in_memory_df(self, df):
         """Set an in-memory DataFrame for test mode"""
         self.in_memory_df = df
