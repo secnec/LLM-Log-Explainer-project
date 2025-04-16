@@ -110,7 +110,7 @@ Text: "- 1131577111 2005.11.09 cn3 nov 9 14:58:31 cn3/cn3 kernel: ext3 fs on sda
 Label: other
 
 Example 9:
-Text: "12-18 18:30:15.361 1795 1808 v activity manager: attempted to start a foreground service ( component info {com.sankuai.meituan/com.dianping.base.push.pushservice.dp.dp push service} ) with a broken notification (no icon: notification(pri=0 content view=null vibrate=null sound=null defaults=0x0 flags=0x40 color=0x00000000 vis=private))"
+Text: "12-18 18:30:15.361 1795 1808 v activity manager: attempted to start a foreground service ( component info {{com.sankuai.meituan/com.dianping.base.push.pushservice.dp.dp push service}} ) with a broken notification (no icon: notification(pri=0 content view=null vibrate=null sound=null defaults=0x0 flags=0x40 color=0x00000000 vis=private))"
 Label: application
 
 Example 10:
