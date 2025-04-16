@@ -58,7 +58,7 @@ The pipeline consists of the following steps:
 1. Clone the repository:
    ```bash
    git clone https://github.com/secnec/LLM-Log-Explainer-project.git
-   cd explanation-pipeline
+   cd LLM-Log-Explainer-project
    ```
 
 2. Install dependencies:
