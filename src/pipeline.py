@@ -255,7 +255,7 @@ def main():
     parser.add_argument('--ad-method', choices=['LOF', 'IF'], default='LOF', help='Anomaly detection method')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--test-mode', action='store_true', help='Run in test mode')
-    parser.add_argument('--clean_results', action='store_true', help='Clean the prompt')
+    parser.add_argument('--clean-results', action='store_true', help='Clean the prompt')
     parser.add_argument('--output', type=str, default='anomaly_results.csv', help='Output file path')
     args = parser.parse_args()
     
