@@ -184,7 +184,7 @@ class LLMPrompter:
         try:
             print("Sending combined file prompt to LLM...")
             # Adjust max_tokens if needed for combined identify/explain
-            response = self.lm(file_explanation_prompt, max_tokens=1000) # Potentially longer response
+            response = self.call_llm(file_explanation_prompt, max_tokens=1000) # Potentially longer response
             # Handle response list/string
             if isinstance(response, list) and response: return response[0].strip()
             if isinstance(response, str): return response.strip()

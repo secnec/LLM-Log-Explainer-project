@@ -1,4 +1,4 @@
-from utils.prompts import DEFAULT_EXPLANATION_PROMPT, DEFAULT_LABEL_PROMPT, DEFAULT_FILE_PROMPT
+from src.utils.prompts import DEFAULT_EXPLANATION_PROMPT, DEFAULT_LABEL_PROMPT, DEFAULT_FILE_PROMPT
 import polars as pl
 from src.llm_prompter import LLMPrompter
 import os
