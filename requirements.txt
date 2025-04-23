@@ -1,12 +1,23 @@
-dspy
-ipykernel
-openai
+# Core dependencies
+pyarrow==16.0.0
+numpy==1.26.4
 pandas
 polars
-sentence-transformers
 scikit-learn
+python-dotenv
+
+# ML and embedding packages
+huggingface_hub==0.12.0
+torch==1.31.1
+transformers==4.26.0
+sentence-transformers==2.2.2
+
+# LLM-related packages
+#dspy
+openai
+
+# Development and testing
+ipykernel
 pytest
 sentence-transformers
 tiktoken
-# Testing
-pytest
