@@ -8,3 +8,4 @@ venv
 myenv
 src/data/
 .DS_Store
+.venv

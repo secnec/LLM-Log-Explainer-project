@@ -26,11 +26,11 @@ def run_pipeline(df, **kwargs):
 
         elif kwargs["anomaly_level"] == 'line':
             context_selection = ContextSelection(
-                selection_strategy="semantic", 
+                selection_strategy=kwargs["context_selection_strategy"], 
                 df_path=None,
                 column_name=kwargs["context_column"], 
-                top_k_far=3, 
-                top_k_near=2,
+                top_k_far=kwargs["top_k_far"], 
+                top_k_near=kwargs["top_k_near"],
                 drop_duplicates=False,
                 verbose=kwargs["verbose"],
             )
@@ -217,34 +217,12 @@ def prepare_data(df, args, verbose=False):
     except:
         pass
     
-    if args.csv_input and os.path.exists(args.csv_input):
-        try:
-            anomaly_df = pl.read_csv(args.csv_input)
-            
-            id_col = None
-            for col in ['row_nr', 'LineId']:
-                if col in anomaly_df.columns:
-                    id_col = col
-                    break
-            
-            if id_col is not None:
-                anomaly_ids = set(anomaly_df[id_col].to_list())
-                df = df.with_columns(
-                    pl.when(pl.col('LineId').is_in(anomaly_ids))
-                    .then(pl.lit(1.0))
-                    .otherwise(pl.col('anomaly_score'))
-                    .alias('anomaly_score')
-                )
-        except Exception:
-            pass
-    
     return df
 
 def main():
     parser = argparse.ArgumentParser(description='Log Anomaly Explainer Pipeline')
     parser.add_argument('--input', type=str, default='src/data/bgl-demo-1.parquet', 
                         help='Input Parquet file path')
-    parser.add_argument('--csv-input', type=str, help='Optional CSV file with known anomalies')
     parser.add_argument('--threshold', type=float, default=0.79, help='Anomaly score threshold')
     parser.add_argument('--score-column', type=str, default='pred_ano_proba', help='Anomaly score column name')
     parser.add_argument('--id-column', type=str, default='row_nr', help='ID column name')
@@ -253,9 +231,13 @@ def main():
     parser.add_argument('--log-type', choices=['BGL', 'LO2', 'mixed'], default='BGL')
     parser.add_argument('--anomaly-level', choices=['line', 'file'], default='line', help='Anomaly level, used for context selection')
     parser.add_argument('--ad-method', choices=['LOF', 'IF'], default='LOF', help='Anomaly detection method')
+    parser.add_argument('--context-selection-strategy', choices=['semantic', 'lexical', 'hybrid'], default='semantic', help='How the context is selected. If hybrid, it will use both semantic and lexical context')
+    parser.add_argument('--top-k-near', type=int, default=6, help='The number of lines before and after the log anomaly to be used as a near context')
+    parser.add_argument('--top-k-far', type=int, default=5, help='The number of the most similar lines to the log anomaly to be used as far context')
+    parser.add_argument('--embedder-model', type=str, default='sentence-transformers/all-MiniLM-L6-v2', help='Embedder model name')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--test-mode', action='store_true', help='Run in test mode')
-    parser.add_argument('--clean-results', action='store_true', help='Clean the prompt')
+    parser.add_argument('--clean-results', action='store_true', help='Clean the results')
     parser.add_argument('--output', type=str, default='anomaly_results.csv', help='Output file path')
     args = parser.parse_args()
     
