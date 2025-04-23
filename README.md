@@ -95,11 +95,11 @@ The pipeline consists of the following steps:
    - `--ad-method`: The anomaly detection method used. Can be either `LOF` or `IF`. Default: `LOF`.
 
 ### Other Parameters:
-   - --threshold: The threshold for anomaly detection. If the anomaly score is above this threshold, the LLM will be called to generate the labels and explanations. Default: `0.79`.
-   - --verbose: If set, the pipeline will provide detailed output during execution. Default: `False` (not set).
-   - --test-mode: If set, the pipeline will run in test mode, simulating LLM responses. Real calls will not be performed. Default: `False` (not set).
-   - --clean-results: If set, the pipeline will clean the generated LLM explanations and labels to ensure unified results. Default: `False` (not set).
-   - --output: The path to the output CSV file where the results will be saved. Default: `anomaly_results.csv`.
+   - `--threshold`: The threshold for anomaly detection. If the anomaly score is above this threshold, the LLM will be called to generate the labels and explanations. Default: `0.79`.
+   - `--verbose`: If set, the pipeline will provide detailed output during execution. Default: `False` (not set).
+   - `--test-mode`: If set, the pipeline will run in test mode, simulating LLM responses. Real calls will not be performed. Default: `False` (not set).
+   - `--clean-results`: If set, the pipeline will clean the generated LLM explanations and labels to ensure unified results. Default: `False` (not set).
+   - `--output`: The path to the output CSV file where the results will be saved. Default: `anomaly_results.csv`.
 
 ## 🧪 Example Usage
 
@@ -120,6 +120,8 @@ python -m src.pipeline --input data/bgl-demo/bgl-demo-1.parquet --threshold 0.91
    -  Completeness: The explanation should be complete and provide enough information about the root causes and how this impacts the system.
    -  Language and Plausability: how well the explanation is written and if it makes sense.
    
+   The LLM used in the evaluation was gpt-4o mini from the ChatGPT UI. The judge LLM was also asked to provide a score out of 10 to evaluate how well the explanations were.
+   With the highest score given by the LLM-judge being 10/10 and the lowest being 2/10, the average score was 5.8/10.
    The evaluation results are accessible via this [link](https://docs.google.com/spreadsheets/d/1DXa9TYVUxpWdIfeqK1H4wSHIXnWOW2DWcshtsEBu_84/edit?usp=sharing)
 
 ### Evaluation of the LLM-generated Labels
