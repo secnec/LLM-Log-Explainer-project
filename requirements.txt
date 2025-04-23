@@ -21,3 +21,6 @@ ipykernel
 pytest
 sentence-transformers
 tiktoken
+
+# evals
+matplotlib

@@ -1,0 +1,53 @@
+Superlog Computer Labeler Evaluation Results
+===========================================
+
+Accuracy: 0.8771
+Precision: 0.9099
+Recall: 0.8771
+F1 Score: 0.8833
+Processing Time: 468.16 seconds
+Number of Predictions: 407
+
+Per-Class Metrics:
+  application:
+    Precision: 0.8800
+    Recall: 0.7857
+    F1 Score: 0.8302
+    Count: 28
+
+  authentication:
+    Precision: 0.5714
+    Recall: 1.0000
+    F1 Score: 0.7273
+    Count: 8
+
+  device:
+    Precision: 0.0000
+    Recall: 0.0000
+    F1 Score: 0.0000
+    Count: 2
+
+  io:
+    Precision: 0.9545
+    Recall: 1.0000
+    F1 Score: 0.9767
+    Count: 21
+
+  memory:
+    Precision: 0.6000
+    Recall: 1.0000
+    F1 Score: 0.7500
+    Count: 6
+
+  network:
+    Precision: 0.5735
+    Recall: 1.0000
+    F1 Score: 0.7290
+    Count: 39
+
+  other:
+    Precision: 0.9739
+    Recall: 0.8614
+    F1 Score: 0.9142
+    Count: 303
+

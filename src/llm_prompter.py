@@ -177,18 +177,32 @@ class LLMPrompter:
        
         return df
 
-    def get_file_explanation_response(self, file_explanation_prompt: str) -> str | None:
+
+def get_file_explanation_response(self, file_explanation_prompt: str) -> str | None:
         """
         Gets a single explanation response from the LLM for a file-level prompt.
         """
+        if not file_explanation_prompt or not isinstance(file_explanation_prompt, str):
+            print("Error: Invalid or empty prompt provided for file explanation.")
+            return "Error: Invalid prompt provided."
+
+        print("Sending combined file prompt to LLM...")
         try:
-            print("Sending combined file prompt to LLM...")
-            # Adjust max_tokens if needed for combined identify/explain
-            response = self.call_llm(file_explanation_prompt, max_tokens=1000) # Potentially longer response
-            # Handle response list/string
-            if isinstance(response, list) and response: return response[0].strip()
-            if isinstance(response, str): return response.strip()
-            return f"LLM returned no valid response. Raw: {response}"
+            # Use a potentially larger token count for combined identify/explain
+            response = self.call_llm(file_explanation_prompt, max_tokens=1000)
+
+            # self.call_llm returns the content string or an error string beginning with "Error:" or "API Error:"
+            if response is None:
+                 print("LLM call returned None.")
+                 return "Error: LLM call returned no response."
+            elif response.startswith("Error:") or response.startswith("API Error:"):
+                 print(f"LLM call failed: {response}")
+                 return response # Return the error message from call_llm
+            else:
+                 print("LLM file explanation response received successfully.")
+                 return response.strip() # Return the successful response content
+
         except Exception as e:
-            print(f"Error getting file explanation from LLM: {e}")
-            return f"Error during LLM communication: {str(e)}"
+            # Catch unexpected errors outside the call_llm try/except
+            print(f"Unexpected error in get_file_explanation_response wrapper: {e}")
+            return f"Error: Unexpected issue processing file explanation: {str(e)}"

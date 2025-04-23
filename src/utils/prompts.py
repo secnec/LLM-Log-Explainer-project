@@ -162,7 +162,7 @@ Think through the following steps:
 Respond with ONLY one category name - no explanation, no additional text.
 """
 
-# NEW: Combined Prompt for File Anomaly Identification & Explanation
+# Update: Combined Prompt for File Anomaly Identification & Explanation
 DEFAULT_FILE_PROMPT = """
 You are an expert log analysis assistant tasked with analyzing a log file snippet flagged as anomalous because it contains at least one erroneous log line.
 
@@ -171,33 +171,89 @@ You are an expert log analysis assistant tasked with analyzing a log file snippe
 - **Potential Error Hint:** The filename suggests the primary error might be related to: `{error_type}`.
 
 **Log Snippet & Task:**
-Below is a sequence of log lines extracted from the file. Your task is to **identify the specific line(s)** in this snippet that are most likely the anomaly (or directly related to it) AND **provide a detailed explanation** for *why* they are considered anomalous, referencing the filename hint and log content.
+Below is a sequence of log lines extracted from the file. Your task is to **identify the specific line(s)** in this snippet that are most likely the anomaly (or directly related to it) AND **provide a detailed explanation** for *why* they are considered anomalous, referencing the likely anomaly label based on the filename and the log content.
 
 **Log Snippet:**
 (Format: (Score: Anomaly Score) Msg: Log Message Snippet)
 {formatted_log_lines}
 
+**Known LO2 Anomaly Labels:**
+This system commonly encounters the following specific anomaly types, which are often reflected directly in filenames like the one provided:
+*   access token auth header error 401
+*   access token authorization form 401
+*   access token client id not found 404
+*   access token client secret wrong 401
+*   access token form urlencoded 400
+*   access token illegal grant type 400
+*   access token missing authorization header 400
+*   authorization code client id missing 400
+*   authorization code invalid client id 404
+*   authorization code invalid password 401
+*   authorization code missing response type 400
+*   authorization code response not code 400
+*   code challenge invalid format pkce 400
+*   code challenge too long pkce 400
+*   code challenge too short pkce 400
+*   code verifier missing pkce 400
+*   code verifier too long pkce 400
+*   code verifier too short pkce 400
+*   delete client 404 no client
+*   delete service 404 no service
+*   delete token 404
+*   delete user 404 no user
+*   get client 404 no client
+*   get client page 400 no page
+*   get service 404 no service
+*   get service page 400 no page
+*   get token 404
+*   get token page 400 no page
+*   get user 404 no user
+*   get user page 400 no page
+*   invalid code challenge method pkce 400
+*   invalid code verifier format PKCE 400
+*   register client 400 clientProfile
+*   register client 400 clientType
+*   register client 404 no user
+*   register service 400 service id
+*   register service 400 service type
+*   register service 404 no user
+*   register user 400 email exists
+*   register user 400 no password
+*   register user 400 password no match
+*   register user 400 user exists
+*   update client 400 clientProfile
+*   update client 400 clientType
+*   update client 404 clientId
+*   update client 404 ownerId
+*   update password 400 not match
+*   update password 401 wrong password
+*   update password 404 user not found
+*   update service 404 service id
+*   update service 404 user id
+*   update user 404 no user
+*   verification failed pkce 400
+
 **Instructions:**
-1.  **Prioritize Filename Hint:** Use the potential error type (`{error_type}`) as your primary guide.
-2.  **Analyze Chronological Snippet:** Read through the ordered lines to understand the context.
-3.  **Identify & Explain Anomalous Line(s):**
-    *   Pinpoint the line(s) most likely related to the `{error_type}` or showing clear errors/high scores.
+1.  **Match Filename Hint to Known Labels:** Compare the potential error hint (`{error_type}`) derived from the filename to the list of **Known LO2 Anomaly Labels** above. Determine the most likely specific label matching the filename.
+2.  **Analyze Chronological Snippet:** Read through the ordered lines with the likely anomaly label in mind.
+3.  **Identify & Explain Anomalous Line(s) based on Likely Label:**
+    *   Pinpoint the line(s) most likely related to the specific anomaly label identified in step 1. Look for direct error messages, high scores, relevant stack traces, etc.
     *   For **each** identified line:
         *   Quote the **first ~30 characters** of its message content (starting after "Msg: ") for reference.
         *   Provide a **detailed explanation** covering:
-            *   Why this specific line is anomalous or relevant to the suspected error (`{error_type}`).
-            *   How its content (keywords, errors, status codes) supports this.
+            *   Why this specific line is anomalous or relevant to the suspected anomaly label.
+            *   How its content (keywords, errors, status codes like 400/401/404) supports this.
             *   How its anomaly score (`Score: ...`) relates, if significant.
-            *   Comparison to expected normal behavior (implicitly or explicitly).
+            *   Comparison to expected normal behavior (e.g., referencing normal OAuth flows, PKCE steps).
             *   Potential root causes if evident.
-4.  **Address Missing Error Message (If Applicable):** If the *exact* error message matching the filename (e.g., a line explicitly stating "401 Unauthorized") is *NOT* present in this snippet, **state this explicitly**. Then, explain how the snippet *still supports* the conclusion that the filename's error occurred (e.g., "Although the exact 401 error message isn't shown in this snippet, the presence of stack traces [lines X, Y] with high anomaly scores strongly suggests they resulted from the 401 error indicated by the filename.").
-5.  **Summarize:** Conclude with a concise summary of the identified anomaly and its nature within the file context.
+4.  **Address Missing Error Message (If Applicable):** If the *exact* error message matching the identified label is *NOT* present in this snippet, **state this explicitly**. Then, explain how the snippet *still supports* the conclusion that the labelled error likely occurred (e.g., "Although the exact 401 error message isn't shown in this snippet, the presence of stack traces [lines X, Y] with high anomaly scores strongly suggests they resulted from the 401 error indicated by the the labelled error.").
+5.  **Summarize:** Conclude with a concise summary of the identified anomaly (referencing the specific LO2 label) and its nature within the file context.
 
 **Output Format:**
--   Filename Anomaly Indication: [State the error suggested by the filename]
+-   Filename Anomaly Indication / Matched Label: [State the error suggested by filename AND the best matching Known LO2 Label from the list]
 -   Analysis and Explanation:
-    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line...]
-    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line...]
+    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line, linking to the matched label...]
+    -   Line starting with "(Score: ...) Msg: [First ~30 chars...]": [Detailed explanation for this line, linking to the matched label...]
     -   [If applicable]: Explicit statement that the direct error message is missing but the snippet provides related evidence (like stack traces).
--   Summary: [Concise summary of the overall anomaly found/inferred in the file snippet]
+-   Summary: [Concise summary of the overall anomaly found/inferred in the file snippet, referencing the matched LO2 label]
 """
