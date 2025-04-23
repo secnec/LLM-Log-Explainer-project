@@ -73,31 +73,33 @@ The pipeline consists of the following steps:
 
 ---
 
-## Pipeline Parameters
+## 🛠️ Pipeline Parameters
 
 ### Context Selection Parameters:
-   - --context-selection-strategy: Defines how the context is selected. Can be one of ["semantic", "lexical", "hybrid"]. If "semantic", it uses the "embedder-model" model to compute the sentence embeddings of the log lines then using the cosine similarity it finds the top similar lines to the log anomaly line. If "lexical", it uses the Count Vectoriser to find the most similar line. If hybrid, it will use both semantic and lexical context.
-   - --embedder-model: The name of the embedder model to be used for semantic context selection. Default is "sentence-transformers/all-MiniLM-L6-v2".
-   - --top-k-near: The number of lines before and after the log anomaly to be used as a near context.
-   - --top-k-far: The number of the most similar lines to the log anomaly to be used as far context for both semantic and lexical context
+   - `--context-selection-strategy`: Defines how the context is selected. Can be one of [`semantic`, `lexical`, `hybrid`]. Default: `semantic`.  
+     - If `semantic`, it uses the `embedder-model` model to compute the sentence embeddings of the log lines, then using the cosine similarity, it finds the top similar lines to the log anomaly line.  
+     - If `lexical`, it uses the Count Vectorizer to find the most similar line.  
+     - If `hybrid`, it will use both semantic and lexical context.
+   - `--embedder-model`: The name of the embedder model to be used for semantic context selection. Default: `sentence-transformers/all-MiniLM-L6-v2`.
+   - `--top-k-near`: The number of lines in total before and after the log anomaly to be used as a near context. Default: `6` (so 3 lines before and 3 lines after the log anomaly line will be used as a context).
+   - `--top-k-far`: The number of the most similar lines to the log anomaly to be used as far context for both semantic and lexical context. Default:`5`.
 
 ### Input Data Parameters:
-   - --input: The path to the input Parquet file containing the log data.
-   - --score-column: The name of the column containing the anomaly scores.
-   - --id-column: The name of the column containing the unique identifiers for each log entry.
-   - --message-column: The name of the column containing the log messages.
-   - --context-column: The name of the column to be used for context selection, can be either the raw log message or the normalized message.
-   - --log-type: The type of log data being processed. Can be one of ["BGL", "LO2", "mixed"].
-   - --anomaly-level: The level of anomaly detection. Can be either "line" or "file". This determines how the context is selected.
-   - --ad-method: The anomaly detection method used. Can be either "LOF" or "IF".
+   - `--input`: The path to the input Parquet file containing the log data. Default: `src/data/bgl-demo-1.parquet`.
+   - `--score-column`: The name of the column containing the anomaly scores. Default: `pred_ano_proba`.
+   - `--id-column`: The name of the column containing the unique identifiers for each log entry. Default: `row_nr`.
+   - `--message-column`: The name of the column containing the log messages. Default: `m_message`.
+   - `--context-column`: The name of the column to be used for context selection, can be either the raw log message or the normalized message. Default: `e_message_normalized`.
+   - `--log-type`: The type of log data being processed. Can be one of [`BGL`, `LO2`, `mixed`]. Default: `BGL`.
+   - `--anomaly-level`: The level of anomaly detection. Can be either `line` or `file`. This determines how the context is selected. Default: `line`.
+   - `--ad-method`: The anomaly detection method used. Can be either `LOF` or `IF`. Default: `LOF`.
 
 ### Other Parameters:
-   - --threshold: The threshold for anomaly detection. If the anomaly score is above this threshold than the LLM will be called to generate the labels and explanations.
-   - --verbose: If set, the pipeline will provide detailed output during execution.
-   - --test-mode: If set, the pipeline will run in test mode, simulating LLM responses, real calls will not be performed.
-   - --clean-results: If set, the pipeline will clean the generated LLM explanations and labels to ensure unified results.
-   - --output: The path to the output CSV file where the results will be saved.
-
+   - --threshold: The threshold for anomaly detection. If the anomaly score is above this threshold, the LLM will be called to generate the labels and explanations. Default: `0.79`.
+   - --verbose: If set, the pipeline will provide detailed output during execution. Default: `False` (not set).
+   - --test-mode: If set, the pipeline will run in test mode, simulating LLM responses. Real calls will not be performed. Default: `False` (not set).
+   - --clean-results: If set, the pipeline will clean the generated LLM explanations and labels to ensure unified results. Default: `False` (not set).
+   - --output: The path to the output CSV file where the results will be saved. Default: `anomaly_results.csv`.
 
 ## 🧪 Example Usage
 
@@ -109,12 +111,18 @@ python -m src.pipeline --input data/bgl-demo/bgl-demo-1.parquet --threshold 0.91
 
 ---
 
-## 🛠️ To Do
+## ✍️ Evaluation
 
-- [ ] Add Explanations Evaluation Module.
-- [ ] Add Labels Evaluation Module.
+### Evaluation of the LLM-generated Explanations
+   The LLM-generated explanations were evaluated using Human Evaluation, and an LLM-as-a-judge evaluation method. Each anomaly was evaluated based on the following criteria:
+   -  Correct Identification of the error: whether the LLM correctly identified the error and could explain it in a human-readable way.
+   -  Relevance: The ability of the LLM to explain how this anomaly deviates from the normal behavior of the system.
+   -  Completeness: The explanation should be complete and provide enough information about the root causes and how this impacts the system.
+   -  Language and Plausability: how well the explanation is written and if it makes sense.
+   
+   The evaluation results are accessible via this [link](https://docs.google.com/spreadsheets/d/1DXa9TYVUxpWdIfeqK1H4wSHIXnWOW2DWcshtsEBu_84/edit?usp=sharing)
 
----
+### Evaluation of the LLM-generated Labels
 
 ## 📬 Contact
 
