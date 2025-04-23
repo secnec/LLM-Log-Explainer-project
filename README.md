@@ -131,15 +131,9 @@ The labeling component of this project classifies log anomalies into six distinc
 ### Label Selection Methodology
 
 Our labeling approach is based on the work from the research paper ["Towards Automated Log-Based Anomaly Detection Through Natural Language-Guided Machine Learning"](https://arxiv.org/pdf/2308.11526) by Hasan et al. (2023), which presents a framework for using natural language processing to enhance log-based anomaly detection. 
-
-The label categories were further refined using techniques from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository by Pranjal Gupta, which provides methodologies for:
-
-1. Extracting semantic features from log messages
-2. Identifying anomaly types through clustering and classification
-3. Applying representation learning to improve log-based anomaly detection
 ### Test Dataset
 
-The evaluation was performed using a labeled dataset of 406 log lines, sourced from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository. 
+The evaluation was performed using a labeled dataset of 406 log lines, sourced from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository provided by the author's of the paper. 
 ## ✍️ Evaluation
 
 ### Evaluation of the LLM-generated Explanations
