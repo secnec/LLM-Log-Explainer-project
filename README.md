@@ -73,6 +73,32 @@ The pipeline consists of the following steps:
 
 ---
 
+## Pipeline Parameters
+
+### Context Selection Parameters:
+   - --context-selection-strategy: Defines how the context is selected. Can be one of ["semantic", "lexical", "hybrid"]. If "semantic", it uses the "embedder-model" model to compute the sentence embeddings of the log lines then using the cosine similarity it finds the top similar lines to the log anomaly line. If "lexical", it uses the Count Vectoriser to find the most similar line. If hybrid, it will use both semantic and lexical context.
+   - --embedder-model: The name of the embedder model to be used for semantic context selection. Default is "sentence-transformers/all-MiniLM-L6-v2".
+   - --top-k-near: The number of lines before and after the log anomaly to be used as a near context.
+   - --top-k-far: The number of the most similar lines to the log anomaly to be used as far context for both semantic and lexical context
+
+### Input Data Parameters:
+   - --input: The path to the input Parquet file containing the log data.
+   - --score-column: The name of the column containing the anomaly scores.
+   - --id-column: The name of the column containing the unique identifiers for each log entry.
+   - --message-column: The name of the column containing the log messages.
+   - --context-column: The name of the column to be used for context selection, can be either the raw log message or the normalized message.
+   - --log-type: The type of log data being processed. Can be one of ["BGL", "LO2", "mixed"].
+   - --anomaly-level: The level of anomaly detection. Can be either "line" or "file". This determines how the context is selected.
+   - --ad-method: The anomaly detection method used. Can be either "LOF" or "IF".
+
+### Other Parameters:
+   - --threshold: The threshold for anomaly detection. If the anomaly score is above this threshold than the LLM will be called to generate the labels and explanations.
+   - --verbose: If set, the pipeline will provide detailed output during execution.
+   - --test-mode: If set, the pipeline will run in test mode, simulating LLM responses, real calls will not be performed.
+   - --clean-results: If set, the pipeline will clean the generated LLM explanations and labels to ensure unified results.
+   - --output: The path to the output CSV file where the results will be saved.
+
+
 ## 🧪 Example Usage
 
 To run the pipeline with the demo data from the BGL dataset, use the following command:
