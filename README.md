@@ -128,8 +128,6 @@ The labeling component of this project classifies log anomalies into six distinc
 - **Network**: Communication issues such as connection timeouts, unreachable hosts, or network interface failures
 - **Other**: Anomalies that don't clearly fit into the above categories
 
-This taxonomy was developed based on common patterns observed in system logs across different applications and environments.
-
 ### Label Selection Methodology
 
 Our labeling approach is based on the work from the research paper ["Towards Automated Log-Based Anomaly Detection Through Natural Language-Guided Machine Learning"](https://arxiv.org/pdf/2308.11526) by Hasan et al. (2023), which presents a framework for using natural language processing to enhance log-based anomaly detection. 
@@ -139,18 +137,9 @@ The label categories were further refined using techniques from the [learning-re
 1. Extracting semantic features from log messages
 2. Identifying anomaly types through clustering and classification
 3. Applying representation learning to improve log-based anomaly detection
-
-The final label set was designed to balance specificity (providing meaningful categories) with generalizability (being applicable across different systems and log formats).
-
 ### Test Dataset
 
-The evaluation was performed using a labeled dataset of 406 log lines, sourced from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository. This dataset contains diverse log messages from real-world systems with pre-labeled anomaly types, making it ideal for evaluating the accuracy of our labeling mechanism.
-
-The dataset includes a balanced distribution across the six anomaly categories, with varying degrees of complexity and context dependency in the log messages. Each log line in the dataset contains:
-- The raw log message text
-- A true label indicating the anomaly type
-- Additional metadata including timestamps and severity levels
-
+The evaluation was performed using a labeled dataset of 406 log lines, sourced from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository. 
 ## ✍️ Evaluation
 
 ### Evaluation of the LLM-generated Explanations
