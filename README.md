@@ -21,6 +21,10 @@ This repository implements a modular pipeline for generating natural language ex
 ├── notebooks 
    ├── ....                       # Jupyter Notebooks for Exploration and Testing 
 ├── data                           # Sample Data Files
+├── evals                          # Evaluation Scripts and Results
+   ├── label_evals.py             # Script for Evaluating Label Predictions
+   ├── data                       # Evaluation Datasets
+   ├── results                    # Evaluation Results
 ```
 
 ---
@@ -111,6 +115,42 @@ python -m src.pipeline --input data/bgl-demo/bgl-demo-1.parquet --threshold 0.91
 
 ---
 
+## 🏷️ Log Anomaly Labeling 
+
+### Labeling Framework
+
+The labeling component of this project classifies log anomalies into six distinct categories:
+
+- **Application**: Issues within the application logic, such as null pointer exceptions, unhandled errors, or application crashes
+- **Authentication**: Security-related issues like failed login attempts, invalid credentials, or access control problems
+- **IO**: Input/output related problems, including file system errors, disk access failures, or permission issues 
+- **Memory**: Memory allocation problems, out-of-memory errors, or memory leak indicators
+- **Network**: Communication issues such as connection timeouts, unreachable hosts, or network interface failures
+- **Other**: Anomalies that don't clearly fit into the above categories
+
+This taxonomy was developed based on common patterns observed in system logs across different applications and environments.
+
+### Label Selection Methodology
+
+Our labeling approach is based on the work from the research paper ["Towards Automated Log-Based Anomaly Detection Through Natural Language-Guided Machine Learning"](https://arxiv.org/pdf/2308.11526) by Hasan et al. (2023), which presents a framework for using natural language processing to enhance log-based anomaly detection. 
+
+The label categories were further refined using techniques from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository by Pranjal Gupta, which provides methodologies for:
+
+1. Extracting semantic features from log messages
+2. Identifying anomaly types through clustering and classification
+3. Applying representation learning to improve log-based anomaly detection
+
+The final label set was designed to balance specificity (providing meaningful categories) with generalizability (being applicable across different systems and log formats).
+
+### Test Dataset
+
+The evaluation was performed using a labeled dataset of 406 log lines, sourced from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository. This dataset contains diverse log messages from real-world systems with pre-labeled anomaly types, making it ideal for evaluating the accuracy of our labeling mechanism.
+
+The dataset includes a balanced distribution across the six anomaly categories, with varying degrees of complexity and context dependency in the log messages. Each log line in the dataset contains:
+- The raw log message text
+- A true label indicating the anomaly type
+- Additional metadata including timestamps and severity levels
+
 ## ✍️ Evaluation
 
 ### Evaluation of the LLM-generated Explanations
@@ -126,6 +166,23 @@ python -m src.pipeline --input data/bgl-demo/bgl-demo-1.parquet --threshold 0.91
 
 ### Evaluation of the LLM-generated Labels
 
+The LLM-generated labels were evaluated using a test dataset of 406 labeled log lines from the [learning-representations-on-logs-for-aiops](https://github.com/Pranjal-Gupta2/learning-representations-on-logs-for-aiops) repository. The evaluation assessed:
+
+- **Overall Accuracy**: 87.71%
+- **Precision**: 90.99%
+- **Recall**: 87.71%
+- **F1 Score**: 88.33%
+
+Performance varied across different anomaly categories:
+- **IO**: Highest performance with 97.67% F1 score, perfect recall and 95.45% precision
+- **Other**: Strong performance with 91.42% F1 score (largest category with 303 instances)
+- **Application**: Good performance with 83.02% F1 score
+- **Memory**: Perfect recall but moderate precision, resulting in 75.00% F1 score
+- **Authentication**: Perfect recall with lower precision, 72.73% F1 score
+- **Network**: Perfect recall but lower precision at 57.35%, resulting in 72.90% F1 score
+- **Device**: Challenges with this rare category (only 2 instances), with 0% detection rate
+
+The evaluation was completed in 468.16 seconds for 407 predictions.
 ## 📬 Contact
 
 For questions or collaborations, feel free to open an issue or reach out.
