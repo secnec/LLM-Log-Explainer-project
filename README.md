@@ -34,6 +34,7 @@ This repository implements a modular pipeline for generating natural language ex
 The pipeline consists of the following steps:
 
 1. **Data Preparation** (`prepare_data`)  
+   The expected format of the input data for line-anomaly processing is the output from LogLead. The data should have the columns created by the enhancers, and the anomaly_score -column, with the scores from the anomaly detection. This column should be created with auc_roc=True, so that it includes the scores.
    The input data is loaded from a Parquet file and prepared for processing. This includes renaming columns, handling missing values, and ensuring the correct format for anomaly scores and labels. If a CSV file with known anomalies is provided, it is used to update the anomaly scores in the dataset.
 
 2. **Context Selection** (`ContextSelection` and `FileContextSelection`)  
