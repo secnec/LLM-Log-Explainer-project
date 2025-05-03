@@ -134,8 +134,7 @@ class FileContextSelection:
 
         if self.anomaly_detection_method == "LOF":
             df = self.get_LOF_anomalies(df)
-
-        if self.anomaly_detection_method == "IF":
+        elif self.anomaly_detection_method == "IF":
             df = self.get_IF_anomalies(df)
         else:
             return None
