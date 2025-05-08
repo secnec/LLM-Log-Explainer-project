@@ -11,7 +11,7 @@ def create_test_dataframe():
     return pl.DataFrame({
         'LineId': [1, 2, 3],
         'anomaly_score': [0.1, 0.8, 0.9],
-        'lexical_context': [None, 1, 1],
+        'context_ids_ref': [None, 1, 1],
         'log_message': ['Normal', 'Error 1', 'Error 2']
     })
 

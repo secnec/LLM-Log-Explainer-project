@@ -171,7 +171,7 @@ def generate_supercomputer_logs(num_logs=100, anomaly_ratio=0.1, log_type="mixed
             anomaly_scores.append(np.random.uniform(0.0, 0.7))
     
     df = df.with_columns(pl.Series(anomaly_scores).alias('anomaly_score'))
-    df = df.with_columns(pl.lit(None).cast(pl.Utf8).alias('lexical_context'))
+    df = df.with_columns(pl.lit(None).cast(pl.Utf8).alias('context_ids_ref'))
     
     # Print sample anomalies
     print(f"Generated {df.filter(pl.col('anomaly_score') >= 0.8).height} potential anomalies")
