@@ -1,26 +1,20 @@
 # Core dependencies
-pyarrow==16.0.0
-numpy==1.26.4
-pandas
-polars
-scikit-learn
-python-dotenv
-
-# ML and embedding packages
-huggingface_hub==0.12.0
-torch==1.31.1
-transformers==4.26.0
-sentence-transformers==2.2.2
-
-# LLM-related packages
-#dspy
-openai
+pyarrow==19.0.0
+numpy==2.2.2
+pandas==2.2.3
+polars==1.24.0
+scikit-learn==1.6.1
+python-dotenv==1.0.1
+LogLead==1.2.1
+# LLM/ML and embedding packages
+sentence-transformers==3.4.1
+huggingface_hub==0.24.0
+transformers==4.48.0
+torch==2.6.0
+tiktoken==0.8.0
+openai==1.61.1
 
 # Development and testing
-ipykernel
+ipykernel==6.29.5
 pytest
-sentence-transformers
-tiktoken
-
-# evals
-matplotlib
+tqdm==4.67.1

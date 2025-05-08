@@ -60,6 +60,8 @@ The pipeline consists of the following steps:
 
 ## ⚙️ Setup
 
+The dependencies of this project are compatible with python 3.10.
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/secnec/LLM-Log-Explainer-project.git
