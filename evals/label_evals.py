@@ -98,9 +98,9 @@ def preprocess_dataset(df):
             processed_df['anomaly_score'] = 1.0
 
     # Set lexical context if not present
-    if 'lexical_context' not in processed_df.columns:
+    if 'context_ids_ref' not in processed_df.columns:
         # For simplicity, each log is its own context
-        processed_df['lexical_context'] = processed_df['LineId'].astype(str)
+        processed_df['context_ids_ref'] = processed_df['LineId'].astype(str)
 
     # Handle label column naming - check for 'labels' column and rename to 'label'
     if 'label' not in processed_df.columns:

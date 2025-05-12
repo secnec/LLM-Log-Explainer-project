@@ -36,7 +36,7 @@ def run_pipeline(df, **kwargs):
             )
             
             context_selection.set_in_memory_df(df)
-            df_with_context = context_selection.getLexicalContext(df)
+            df_with_context = context_selection.get_context(df)
             
             if kwargs["verbose"]:
                 print(f"Context selection complete.")
@@ -55,8 +55,8 @@ def run_pipeline(df, **kwargs):
             df_with_context = df_with_context.with_columns(
                 pl.when(pl.col('LineId') == line_id)
                 .then(pl.lit(str(line_id)))
-                .otherwise(pl.col('lexical_context'))
-                .alias('lexical_context')
+                .otherwise(pl.col('context_ids_ref'))
+                .alias('context_ids_ref')
             )
             
             for ctx_id in range(context_start, context_end + 1):
@@ -64,8 +64,8 @@ def run_pipeline(df, **kwargs):
                     df_with_context = df_with_context.with_columns(
                         pl.when(pl.col('LineId') == ctx_id)
                         .then(pl.lit(str(line_id)))
-                        .otherwise(pl.col('lexical_context'))
-                        .alias('lexical_context')
+                        .otherwise(pl.col('context_ids_ref'))
+                        .alias('context_ids_ref')
                     )
     
     # Prompt Generation for Labels
@@ -191,8 +191,8 @@ def prepare_data(df, args, verbose=False):
             .alias('true_label')
         )
     
-    if 'lexical_context' not in df.columns:
-        df = df.with_columns(pl.lit(None).alias('lexical_context'))
+    if 'context_ids_ref' not in df.columns:
+        df = df.with_columns(pl.lit(None).alias('context_ids_ref'))
     
     if 'anomaly_score' not in df.columns:
         if 'anomaly' in df.columns:
@@ -234,7 +234,7 @@ def main():
     parser.add_argument('--context-selection-strategy', choices=['semantic', 'lexical', 'hybrid'], default='semantic', help='How the context is selected. If hybrid, it will use both semantic and lexical context')
     parser.add_argument('--top-k-near', type=int, default=6, help='The number of lines before and after the log anomaly to be used as a near context')
     parser.add_argument('--top-k-far', type=int, default=5, help='The number of the most similar lines to the log anomaly to be used as far context')
-    parser.add_argument('--embedder-model', type=str, default='sentence-transformers/all-MiniLM-L6-v2', help='Embedder model name')
+    parser.add_argument('--embedder-model', type=str, default='sentence-transformers/all-MiniLM-L6-v2', help='Embedder model name for semantic similarity')
     parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--test-mode', action='store_true', help='Run in test mode')
     parser.add_argument('--clean-results', action='store_true', help='Clean the results')

@@ -32,7 +32,7 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
         )
         
         context_selection.set_in_memory_df(df)
-        df_with_context = context_selection.getLexicalContext(df)
+        df_with_context = context_selection.get_context(df)
         
         if verbose:
             print(f"Context selection complete.")
@@ -54,12 +54,12 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
             context_start = max(1, line_id - 5)
             context_end = min(df.shape[0], line_id + 5)
             
-            # Update lexical_context for the anomaly and context lines
+            # Update context_ids_ref for the anomaly and context lines
             df_with_context = df_with_context.with_columns(
                 pl.when(pl.col('LineId') == line_id)
                 .then(pl.lit(str(line_id)))
-                .otherwise(pl.col('lexical_context'))
-                .alias('lexical_context')
+                .otherwise(pl.col('context_ids_ref'))
+                .alias('context_ids_ref')
             )
             
             for ctx_id in range(context_start, context_end + 1):
@@ -67,8 +67,8 @@ def run_pipeline(df, threshold=0.8, verbose=True, test_mode=True, clean_results=
                     df_with_context = df_with_context.with_columns(
                         pl.when(pl.col('LineId') == ctx_id)
                         .then(pl.lit(str(line_id)))
-                        .otherwise(pl.col('lexical_context'))
-                        .alias('lexical_context')
+                        .otherwise(pl.col('context_ids_ref'))
+                        .alias('context_ids_ref')
                     )
     
     # Step 2: Prompt Generation
